@@ -9,3 +9,5 @@ The code is free for everyone to use or modify/improve without any warranty.
 
 Welcome to try and provide me feedback at anytime.
 contact me on for any discussion on Linkedin https://www.linkedin.com/in/arief-noor-rahman-3880a536
+
+You can start by downloading the whole folder and open LPF.qsch, then run the simulation and explore from there
