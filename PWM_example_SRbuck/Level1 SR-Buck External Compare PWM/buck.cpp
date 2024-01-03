@@ -97,7 +97,7 @@ extern "C" __declspec(dllexport) void buck(struct sBUCK **opaque, double t, unio
    {
       inst->xcntr++;
 
-      pwm = round(pwm_peak/vin*inst->out);
+      pwm = round(inst->out);
       iref = inst->iref;
 
       inst->verror = vout_ref - vout;
@@ -107,8 +107,8 @@ extern "C" __declspec(dllexport) void buck(struct sBUCK **opaque, double t, unio
       inst->verror_prev = inst->verror;
 
       inst->ierror = inst->iref - IL;
-      inst->out = PI(inst->out, inst->ierror, inst->ierror_prev, 0.44164, 0.030788);
-      if(inst->out > vin) inst->out = vin;
+      inst->out = PI(inst->out, inst->ierror, inst->ierror_prev, 1.84017, 0.128283);
+      if(inst->out > pwm_peak) inst->out = pwm_peak;
       if(inst->out < 0) inst->out = 0;
       inst->ierror_prev = inst->ierror;
 

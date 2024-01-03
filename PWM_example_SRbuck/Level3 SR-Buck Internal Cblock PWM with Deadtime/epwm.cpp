@@ -145,7 +145,7 @@ extern "C" __declspec(dllexport) void epwm(struct sEPWM **opaque, double t, unio
    {
       inst->xcntr++;
       inst->xpeak= peak;
-      inst->xcmp = round(peak/vin*inst->out);
+      inst->xcmp = round(inst->out);
 
       inst->trg1 = inst->trg4 + inst->xcmp/mcu_clk;
       inst->trg2 = inst->trg4 + inst->xpeak/mcu_clk;
@@ -165,8 +165,8 @@ extern "C" __declspec(dllexport) void epwm(struct sEPWM **opaque, double t, unio
       inst->verror_prev = inst->verror;
 
       inst->ierror = inst->iref - isense;
-      inst->out = PI(inst->out, inst->ierror, inst->ierror_prev, 0.44164, 0.030788);
-      if(inst->out > vin) inst->out = vin;
+      inst->out = PI(inst->out, inst->ierror, inst->ierror_prev, 1.84017, 0.128283);
+      if(inst->out > peak) inst->out = peak;
       if(inst->out < 0) inst->out = 0;
       inst->ierror_prev = inst->ierror;
 
