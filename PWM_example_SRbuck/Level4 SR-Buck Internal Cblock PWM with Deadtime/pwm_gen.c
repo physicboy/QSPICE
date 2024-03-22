@@ -104,12 +104,12 @@ void pwm_gen(struct pwm_data *a, bool *interrupt_flag,
    a->pwm_lo = out_en & (!a->pwm) & (!a->pwm_delay);
 }
 
-void pwm_trunc_handler(struct pwm_data *a, double *t, double *timestep, bool *pwm_trigger)
+void pwm_trunc_handler(struct pwm_data *a, double *t_prev, double *timestep, bool *pwm_trigger)
 {
-   if(*t < a->trg_zero){if(*timestep > (a->trg_zero - *t)){*timestep = (a->trg_zero - *t);}}
-   if(*t < a->trg_cmp_rise){if(*timestep > (a->trg_cmp_rise - *t)){*timestep = (a->trg_cmp_rise - *t);}}
-   if(*t < a->trg_peak){if(*timestep > (a->trg_peak - *t)){*timestep = (a->trg_peak - *t);}}
-   if(*t < a->trg_cmp_fall){if(*timestep > (a->trg_cmp_fall - *t)){*timestep = (a->trg_cmp_fall - *t);}}
-   if(*t < a->trg_delay){if(*timestep > (a->trg_delay - *t)){*timestep = (a->trg_delay - *t);}}
+   if(*t_prev < a->trg_zero){*timestep = (a->trg_zero - *t_prev);}
+   if(*t_prev < a->trg_cmp_rise){if(*timestep > (a->trg_cmp_rise - *t_prev)){*timestep = (a->trg_cmp_rise - *t_prev);}}
+   if(*t_prev < a->trg_peak){if(*timestep > (a->trg_peak - *t_prev)){*timestep = (a->trg_peak - *t_prev);}}
+   if(*t_prev < a->trg_cmp_fall){if(*timestep > (a->trg_cmp_fall - *t_prev)){*timestep = (a->trg_cmp_fall - *t_prev);}}
+   if(*t_prev < a->trg_delay){if(*timestep > (a->trg_delay - *t_prev)){*timestep = (a->trg_delay - *t_prev);}}
    if(*pwm_trigger)if(*timestep > a->ttol){*timestep = a->ttol;}
 }

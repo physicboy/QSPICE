@@ -248,10 +248,10 @@ extern "C" __declspec(dllexport) void Trunc(struct sEPWM *inst, double t, union 
    }
    #else
    struct sEPWM tmp = *inst;
-	if(t < inst->trg1){if(*timestep > (inst->trg1 - t)){*timestep = (inst->trg1 - t);}}
-	if(t < inst->trg2){if(*timestep > (inst->trg2 - t)){*timestep = (inst->trg2 - t);}}
-	if(t < inst->trg3){if(*timestep > (inst->trg3 - t)){*timestep = (inst->trg3 - t);}}
-	if(t < inst->trg4){if(*timestep > (inst->trg4 - t)){*timestep = (inst->trg4 - t);}}
+	if(inst->t_prev < inst->trg1){*timestep = (inst->trg1 - inst->t_prev);}
+	if(inst->t_prev < inst->trg2){if(*timestep > (inst->trg2 - inst->t_prev)){*timestep = (inst->trg2 - inst->t_prev);}}
+	if(inst->t_prev < inst->trg3){if(*timestep > (inst->trg3 - inst->t_prev)){*timestep = (inst->trg3 - inst->t_prev);}}
+	if(inst->t_prev < inst->trg4){if(*timestep > (inst->trg4 - inst->t_prev)){*timestep = (inst->trg4 - inst->t_prev);}}
     if(inst->pwm_trigger)
 	{
 		if(*timestep > ttol) *timestep = ttol;
