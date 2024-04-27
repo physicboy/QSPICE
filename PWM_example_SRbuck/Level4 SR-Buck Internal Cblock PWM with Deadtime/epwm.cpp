@@ -168,7 +168,7 @@ extern "C" __declspec(dllexport) void Trunc(struct sEPWM *inst, double t, union 
    }
    #else
 
-   pwm_trunc_handler(&inst->pwm1, &t, timestep, &inst->pwm_trigger);
+   pwm_trunc_handler(&inst->pwm1, &inst->t_prev, timestep, &inst->pwm_trigger);
 
    #endif
 

@@ -342,10 +342,10 @@
   «wire (2500,-1700) (2500,-2300) "GND"»
   «wire (3400,-1700) (3400,-2300) "GND"»
   «wire (-500,-1600) (-500,-2000) "pwm_pulse"»
-  «text (-900,950) 1 7 0 0x1000000 -1 -1 ".model SWH SW Ron=1m Roff=10E6 Vt=0.5 Vh=-1"»
-  «text (-900,800) 1 7 0 0x1000000 -1 -1 ".model SWL SW Ron=1m Roff=10E6 Vt=-0.5 Vh=-1"»
-  «text (-900,1450) 1 7 0 0x1000000 -1 -1 ".tran 0 50m 0 1"»
-  «text (-900,1300) 1 7 0 0x1000000 -1 -1 ".options method=trap"»
-  «text (-900,550) 1 7 0 0x1000000 -1 -1 ".model DD D Ron=1m Roff=10E6 Vfwd=2"»
+  «text (-900,950) 1 7 0 0x1000000 -1 -1 "ï»¿.model SWH SW Ron=1m Roff=10E6 Vt=0.5 Vh=0"»
+  «text (-900,800) 1 7 0 0x1000000 -1 -1 "ï»¿.model SWL SW Ron=1m Roff=10E6 Vt=-0.5 Vh=0"»
+  «text (-900,1450) 1 7 0 0x1000000 -1 -1 "ï»¿.tran 0 50m 0 1"»
+  «text (-900,1300) 1 7 0 0x1000000 -1 -1 "ï»¿.options method=trap"»
+  «text (-900,550) 1 7 0 0x1000000 -1 -1 "ï»¿.model DD D Ron=1m Roff=10E6 Vfwd=2"»
 »
 
