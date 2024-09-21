@@ -44,6 +44,9 @@ void bzero(void *ptr, unsigned int count)
 struct sNEW_PWM
 {
   // declare the structure here
+  bool   ttol_method;
+  double ttol_val;
+
   double t_prev;
   double t_change;
 
@@ -58,14 +61,16 @@ struct sNEW_PWM
 
 extern "C" __declspec(dllexport) void new_pwm(struct sNEW_PWM **opaque, double t, union uData *data)
 {
-   double  ref       = data[0].d; // input
-   double  carrier   = data[1].d; // input
-   double  Isense    = data[2].d; // input
-   double  dtime     = data[3].d; // input parameter
-   double  maxref    = data[4].d; // input parameter
-   bool    cmc0_vmc1 = data[5].d; // input parameter
-   double &hi        = data[6].d; // output
-   double &lo        = data[7].d; // output
+   double  ref          = data[0].d; // input
+   double  carrier      = data[1].d; // input
+   double  Isense       = data[2].d; // input
+   double  dtime        = data[3].d; // input parameter
+   double  maxref       = data[4].d; // input parameter
+   bool    cmc0_vmc1    = data[5].d; // input parameter
+   bool    ttol_method  = data[6].d; // input parameter
+   double  ttol_val     = data[7].d; // input parameter
+   double &hi           = data[8].d; // output
+   double &lo           = data[9].d; // output
 
    if(!*opaque)
    {
@@ -75,6 +80,9 @@ extern "C" __declspec(dllexport) void new_pwm(struct sNEW_PWM **opaque, double t
    struct sNEW_PWM *inst = *opaque;
 
    // Implement module evaluation code here:
+   inst->ttol_method = ttol_method;
+   inst->ttol_val    = ttol_val;
+
    if(cmc0_vmc1)
    {
       // VMC operation mode
@@ -181,15 +189,21 @@ extern "C" __declspec(dllexport) double MaxExtStepSize(struct sNEW_PWM *inst)
 
 extern "C" __declspec(dllexport) void Trunc(struct sNEW_PWM *inst, double t, union uData *data, double *timestep)
 { // limit the timestep to a tolerance if the circuit causes a change in struct sNEW_PWM
-   const double ttol = 1e-11;
 
    struct sNEW_PWM tmp = *inst;
    new_pwm(&(&tmp), t, data);
 
    if((inst->output != tmp.output)||(inst->output_delay != tmp.output_delay))
    {
-      if((t - inst->t_prev) > ttol)
-         *timestep = (t - inst->t_prev)/2;
+      if(inst->ttol_method)
+      {
+         if((t - inst->t_prev) > inst->ttol_val)
+            *timestep = (t - inst->t_prev)/2;
+      }
+      else
+      {
+         *timestep = inst->ttol_val;
+      }
    }
 }
 
