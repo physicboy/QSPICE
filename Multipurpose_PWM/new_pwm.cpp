@@ -181,7 +181,7 @@ extern "C" __declspec(dllexport) double MaxExtStepSize(struct sNEW_PWM *inst)
 
 extern "C" __declspec(dllexport) void Trunc(struct sNEW_PWM *inst, double t, union uData *data, double *timestep)
 { // limit the timestep to a tolerance if the circuit causes a change in struct sNEW_PWM
-   const double ttol = 1e-11;
+   const double ttol = 1e-12;
 
    struct sNEW_PWM tmp = *inst;
    new_pwm(&(&tmp), t, data);
