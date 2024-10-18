@@ -88,6 +88,7 @@ struct fra_data
    double freq;
    double mag;
 
+   double ts;
    double tsampling;
    double tstep;
 
@@ -240,7 +241,7 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
    if(*t >= f->tsampling)
    {
       f->i = f->i + 0.5;
-
+      double ts;
       double fx;
       double freq_p = f->freq;
       if(f->i == floor(f->i))
@@ -291,7 +292,6 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
                else f->mag = f->alo + (f->ahi - f->alo)*(f->freq - f->flo)/(f->fhi - f->flo);
             }
          }
-         double ts;
          ts = f->dwell_period/f->freq;
          if(ts < f->dwell_mintime) ts = f->dwell_mintime;
          f->tsampling = *t + ts;
@@ -300,13 +300,11 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
       {
          if((s->Tsw > 0) && f->use_qlog_optimizer)
          {
-            double ts;
             ts = f->ii/f->freq;
             f->tsampling = *t + ts;
          }
          else
          {
-            double ts;
             ts = f->meas_period/f->freq;
             if(ts < f->meas_mintime) ts = ceil(f->meas_mintime*f->freq)/f->freq;
             f->tsampling = *t + ts;
@@ -331,10 +329,10 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
             double in1am, in1bm, in2am, in2bm;
             double in1mag, in1ph, in2mag, in2ph;
             double in21mag, in21ph;
-            in1am = *in1a - f->in1ap;
-            in1bm = *in1b - f->in1bp;
-            in2am = *in2a - f->in2ap;
-            in2bm = *in2b - f->in2bp;
+            in1am = 2/f->ts*(*in1a - f->in1ap);
+            in1bm = 2/f->ts*(*in1b - f->in1bp);
+            in2am = 2/f->ts*(*in2a - f->in2ap);
+            in2bm = 2/f->ts*(*in2b - f->in2bp);
 
             in1mag = 20*log10(sqrt(in1am*in1am + in1bm*in1bm));
             in1ph  = 180/M_PI*atan2(in1bm,in1am);
@@ -380,6 +378,7 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
             Display("\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",f->i,freq_p,in1mag,in2mag,in21mag,in1ph,in2ph,in21ph);
          }
       }
+      f->ts = ts;
    }
 }
 
