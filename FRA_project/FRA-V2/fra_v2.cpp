@@ -6,6 +6,8 @@
 
 #include <malloc.h>
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 extern "C" __declspec(dllexport) int (*Display)(const char *format, ...) = 0; // works like printf()
 extern "C" __declspec(dllexport) const double *DegreesC                  = 0; // pointer to current circuit temperature
@@ -127,12 +129,18 @@ struct sFRA_V2
 
    double maxstep;
    double t_prev;
+
+   bool plot;
 };
 
 void SS_DETECT(struct ss_data *s, double *t,
-      double *t_prev, double *sense, double *sw_trig);
+   double *t_prev, double *sense, double *sw_trig,
+   double *param1, double *param2, double *param3, double *param4);
 void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t,
       double *in1a, double *in1b, double *in2a, double *in2b);
+
+FILE *fptr;
+char *fname = "fra.csv";
 
 extern "C" __declspec(dllexport) void fra_v2(struct sFRA_V2 **opaque, double t, union uData *data)
 {
@@ -152,7 +160,7 @@ extern "C" __declspec(dllexport) void fra_v2(struct sFRA_V2 **opaque, double t, 
    double  a_hi               = data[13].d; // input parameter
    double  f_lo               = data[14].d; // input parameter
    double  f_hi               = data[15].d; // input parameter
-   bool    lin0_log1          = data[16].d; // input parameter
+   bool    lin0_log1          = data[16].b; // input parameter
    double  tstep_factor       = data[17].d; // input parameter
    double  ss_tmax            = data[18].d; // input parameter
    bool    use_ss_detect      = data[19].b; // input parameter
@@ -166,8 +174,9 @@ extern "C" __declspec(dllexport) void fra_v2(struct sFRA_V2 **opaque, double t, 
    int     ss_detect_window   = data[27].i; // input parameter
    bool    trig_edge          = data[28].b; // input parameter
    int     f_step             = data[29].i; // input parameter
-   double &amp                = data[30].d; // output
-   double &freq               = data[31].d; // output
+   bool    plot               = data[30].b; // input parameter
+   double &amp                = data[31].d; // output
+   double &freq               = data[32].d; // output
 
    if(!*opaque)
    {
@@ -196,13 +205,16 @@ extern "C" __declspec(dllexport) void fra_v2(struct sFRA_V2 **opaque, double t, 
       inst->fra.dwell_period = dwell_period;
       inst->fra.meas_mintime = meas_mintime;
       inst->fra.meas_period = meas_period;
+
+      inst->plot = plot;
    }
    struct sFRA_V2 *inst = *opaque;
 
 // Implement module evaluation code here:
    if(inst->ss.ss_flag == 0)
    {
-      SS_DETECT(&inst->ss, &t, &inst->t_prev, &sense, &sw_trig);
+      SS_DETECT(&inst->ss, &t, &inst->t_prev, &sense, &sw_trig,
+         &param1, &param2, &param3, &param4);
       inst->fra.i = -0.5;
 
       amp = inst->fra.i;
@@ -210,7 +222,11 @@ extern "C" __declspec(dllexport) void fra_v2(struct sFRA_V2 **opaque, double t, 
 
       if(inst->ss.ss_flag == 1)
       {
-         Display("\ti\tfreq\tin1mag\tin2mag\tmag(in2-in1)\tin1ph\tin2ph\tph(in2-in1\n)");
+         Display("\ti\tfreq\tmag(in2/in1)[dB]\targ(in2/in1)[deg]\tmag(in1)[dB]\targ(in1)[deg]\tmag(in2)[dB]\targ(in2)[deg]\n");
+
+         fptr = fopen(fname,"w");
+         fprintf(fptr,"Frequency,Result\n");
+         fclose(fptr);
       }
    }
    else
@@ -311,10 +327,6 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
          }
       }
       //============================================================================
-      /*if(f->i < f->fstep)
-      {
-         Display("%f\t%f\t%f\t%f\t%e\n", f->i, f->freq, f->mag, f->ii, f->tsampling);
-      }*/
       if(f->i > 0)
       {
          if(f->i != floor(f->i))
@@ -375,7 +387,15 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
 
             in21mag = in2mag - in1mag;
             in21ph = in2ph - in1ph;
-            Display("\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",f->i,freq_p,in1mag,in2mag,in21mag,in1ph,in2ph,in21ph);
+            Display("\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",(int)f->i,freq_p,in21mag,in21ph,in1mag,in1ph,in2mag,in2ph);
+
+            double re,im;
+            re = pow(10,in21mag/10)*cos(in21ph*M_PI/180);
+            im = pow(10,in21mag/10)*sin(in21ph*M_PI/180);
+
+            fptr = fopen(fname,"a");
+            fprintf(fptr,"%f\t%f,%f\n",freq_p,re,im);
+            fclose(fptr);
          }
       }
       f->ts = ts;
@@ -383,7 +403,8 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
 }
 
 void SS_DETECT(struct ss_data *s, double *t,
-   double *t_prev, double *sense, double *sw_trig)
+   double *t_prev, double *sense, double *sw_trig,
+   double *param1, double *param2, double *param3, double *param4)
 {
    bool trigger;
 
@@ -409,7 +430,8 @@ void SS_DETECT(struct ss_data *s, double *t,
                {
                   s->ss_flag = 1;
                   s->Tsw = (*t - s->trigger_time)/s->steady_ctr_lim;
-                  Display("ss_time = %f\tsense_avg = %f\tTsw = %e\n",*t, s->sense_avg, s->Tsw);
+                  Display("\tparam1: %f\tparam2: %f\tparam3: %f\tparam4: %f\n", *param1, *param2, *param3, *param4);
+                  Display("\tss_time = %f\tsense_avg = %f\tTsw = %e\n",*t, s->sense_avg, s->Tsw);
                }
             }
             else
@@ -439,5 +461,7 @@ extern "C" __declspec(dllexport) double MaxExtStepSize(struct sFRA_V2 *inst)
 
 extern "C" __declspec(dllexport) void Destroy(struct sFRA_V2 *inst)
 {
+   if(inst->plot) system("timeout 5 \"c:\\Program Files\\QSPICE\\QUX\" fra.csv");
+
    free(inst);
 }
