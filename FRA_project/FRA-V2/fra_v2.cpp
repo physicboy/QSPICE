@@ -461,7 +461,7 @@ extern "C" __declspec(dllexport) double MaxExtStepSize(struct sFRA_V2 *inst)
 
 extern "C" __declspec(dllexport) void Destroy(struct sFRA_V2 *inst)
 {
-   if(inst->plot) system("timeout 5 \"c:\\Program Files\\QSPICE\\QUX\" fra.csv");
+   if(inst->plot) system("\"c:\\Program Files\\QSPICE\\QUX\" fra.csv");
 
    free(inst);
 }
