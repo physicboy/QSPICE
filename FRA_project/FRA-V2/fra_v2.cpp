@@ -225,7 +225,7 @@ extern "C" __declspec(dllexport) void fra_v2(struct sFRA_V2 **opaque, double t, 
          Display("\ti\tfreq\tmag(in2/in1)[dB]\targ(in2/in1)[deg]\tmag(in1)[dB]\targ(in1)[deg]\tmag(in2)[dB]\targ(in2)[deg]\n");
 
          fptr = fopen(fname,"w");
-         fprintf(fptr,"Frequency,Result\n");
+         fprintf(fptr,"Frequency,IN2/IN1\n");
          fclose(fptr);
       }
    }
@@ -390,8 +390,8 @@ void FRA_CORE(struct fra_data *f, struct ss_data *s, double *t, double *in1a, do
             Display("\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",(int)f->i,freq_p,in21mag,in21ph,in1mag,in1ph,in2mag,in2ph);
 
             double re,im;
-            re = pow(10,in21mag/10)*cos(in21ph*M_PI/180);
-            im = pow(10,in21mag/10)*sin(in21ph*M_PI/180);
+            re = pow(10,in21mag/20)*cos(in21ph*M_PI/180);
+            im = pow(10,in21mag/20)*sin(in21ph*M_PI/180);
 
             fptr = fopen(fname,"a");
             fprintf(fptr,"%f\t%f,%f\n",freq_p,re,im);
