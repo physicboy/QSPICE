@@ -64,6 +64,18 @@ struct sLOSS_MEAS
   double voff;
   double ioff;
 
+  double xrdson;
+  double xsw_ton;
+  double xsw_toff;
+  double xrg_nom;
+  double xrg_int;
+  double xvds[6];
+  double xeoss[6];
+  double xid[6];
+  double xvsd[6];
+  double xtj[6];
+  double xr_tj[6];
+
   double mult_vi;
   double mult_vi_int;
   double mult_vi_prev;
@@ -76,19 +88,6 @@ struct sLOSS_MEAS
   double pdevice;
   double ptotal;
 };
-
-float table[6][6];
-double xrdson;
-double xsw_ton;
-double xsw_toff;
-double xrg_nom;
-double xrg_int;
-double xvds[6];
-double xeoss[6];
-double xid[6];
-double xvsd[6];
-double xtj[6];
-double xr_tj[6];
 
 
 extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, double t, union uData *data)
@@ -132,20 +131,22 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
 
       fclose(file);
 
-      xrdson   = table[0][0] * Rds_factor;
-      xsw_ton  = table[0][1];
-      xsw_toff = table[0][2];
-      xrg_nom  = table[0][3];
-      xrg_int  = table[0][4];
+      struct sLOSS_MEAS *inst = *opaque;
+
+      inst->xrdson   = table[0][0] * Rds_factor;
+      inst->xsw_ton  = table[0][1];
+      inst->xsw_toff = table[0][2];
+      inst->xrg_nom  = table[0][3];
+      inst->xrg_int  = table[0][4];
 
       for (int i = 0; i < 6; ++i)
       {
-         xvds[i]  = table[1][i];
-         xeoss[i] = table[2][i];
-         xid[i]   = table[3][i];
-         xvsd[i]  = table[4][i];
-         xtj[i]   = table[5][i];
-         xr_tj[i] = table[6][i];
+         inst->xvds[i]  = table[1][i];
+         inst->xeoss[i] = table[2][i];
+         inst->xid[i]   = table[3][i];
+         inst->xvsd[i]  = table[4][i];
+         inst->xtj[i]   = table[5][i];
+         inst->xr_tj[i] = table[6][i];
       }
 
       for (int i = 0; i < 7; ++i)
@@ -163,7 +164,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
    int gate = vgs > 0.5;
 
    // conduction loss integral calculation
-   inst->mult_vi = xrdson * id/Npara * id/Npara;
+   inst->mult_vi = inst->xrdson * id/Npara * id/Npara;
    inst->mult_vi_int  += (inst->mult_vi + inst->mult_vi_prev) * (t - inst->t_prev) * 0.5;
    inst->mult_vi_prev = inst->mult_vi;
 
@@ -198,17 +199,17 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
       //conduction loss update
      double rdson_k;
 
-      if(Tj >= xtj[5])
+      if(Tj >= inst->xtj[5])
       {
-        rdson_k = xr_tj[5];
+        rdson_k = inst->xr_tj[5];
       }
       else
       {
         for(int i = 0; i < 5; i++)
         {
-           if((xtj[i] <= Tj) && (Tj <= xtj[i + 1]))
+           if((inst->xtj[i] <= Tj) && (Tj <= inst->xtj[i + 1]))
            {
-             rdson_k = xr_tj[i] + (xr_tj[i + 1] - xr_tj[i]) * (Tj - xtj[i]) / (xtj[i + 1] - xtj[i]);
+             rdson_k = inst->xr_tj[i] + (inst->xr_tj[i + 1] - inst->xr_tj[i]) * (Tj - inst->xtj[i]) / (inst->xtj[i + 1] - inst->xtj[i]);
              break;
            }
         }
@@ -221,21 +222,21 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
 
       if(inst->ion >= 0)
       {
-         inst->pon = 0.5 * xsw_ton * inst->von * inst->ion / period * ((rgon + xrg_int) / (xrg_nom + xrg_int)) * Pon_factor;
+         inst->pon = 0.5 * inst->xsw_ton * inst->von * inst->ion / period * ((rgon + inst->xrg_int) / (inst->xrg_nom + inst->xrg_int)) * Pon_factor;
 
          double eoss;
 
-         if(inst->von >= xvds[5])
+         if(inst->von >= inst->xvds[5])
          {
-            eoss = xeoss[5];
+            eoss = inst->xeoss[5];
          }
          else
          {
             for(int i = 0; i < 5; i++)
             {
-               if((xvds[i] <= inst->von) && (inst->von <= xvds[i + 1]))
+               if((inst->xvds[i] <= inst->von) && (inst->von <= inst->xvds[i + 1]))
                {
-                  eoss = xeoss[i] + (xeoss[i + 1] - xeoss[i]) * (inst->von - xvds[i]) / (xvds[i + 1] - xvds[i]);
+                  eoss = inst->xeoss[i] + (inst->xeoss[i + 1] - inst->xeoss[i]) * (inst->von - inst->xvds[i]) / (inst->xvds[i + 1] - inst->xvds[i]);
                   break;
                }
             }
@@ -252,17 +253,17 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          double xisd = -1 * inst->ion;
          double vsd;
 
-         if(xisd >= xid[5])
+         if(xisd >= inst->xid[5])
          {
-            vsd = xvsd[5];
+            vsd = inst->xvsd[5];
          }
          else
          {
             for(int i = 0; i < 5; i++)
             {
-               if((xid[i] <= xisd) && (xisd <= xid[i + 1]))
+               if((inst->xid[i] <= xisd) && (xisd <= inst->xid[i + 1]))
                {
-                  vsd = xvsd[i] + (xvsd[i + 1] - xvsd[i]) * (xisd - xid[i]) / (xid[i + 1] - xid[i]);
+                  vsd = inst->xvsd[i] + (inst->xvsd[i + 1] - inst->xvsd[i]) * (xisd - inst->xid[i]) / (inst->xid[i + 1] - inst->xid[i]);
                   break;
                }
             }
@@ -273,7 +274,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
 
       if(inst->ioff >= 0)
       {
-         inst->poff = 0.5 * xsw_toff * inst->voff * inst->ioff / period  * ((rgoff + xrg_int) / (xrg_nom + xrg_int)) * Poff_factor;
+         inst->poff = 0.5 * inst->xsw_toff * inst->voff * inst->ioff / period  * ((rgoff + inst->xrg_int) / (inst->xrg_nom + inst->xrg_int)) * Poff_factor;
       }
       else
       {
@@ -282,17 +283,17 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          double xisd = -1 * inst->ioff;
          double vsd;
 
-         if(xisd >= xid[5])
+         if(xisd >= inst->xid[5])
          {
-            vsd = xvsd[5];
+            vsd = inst->xvsd[5];
          }
          else
          {
             for(int i = 0; i < 5; i++)
             {
-               if((xid[i] <= xisd) && (xisd <= xid[i + 1]))
+               if((inst->xid[i] <= xisd) && (xisd <= inst->xid[i + 1]))
                {
-                  vsd = xvsd[i] + (xvsd[i + 1] - xvsd[i]) * (xisd - xid[i]) / (xid[i + 1] - xid[i]);
+                  vsd = inst->xvsd[i] + (inst->xvsd[i + 1] - inst->xvsd[i]) * (xisd - inst->xid[i]) / (inst->xid[i + 1] - inst->xid[i]);
                   break;
                }
             }
