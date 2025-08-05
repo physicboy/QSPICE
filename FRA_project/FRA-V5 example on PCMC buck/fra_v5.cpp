@@ -134,9 +134,6 @@ struct sFRA_V5
    bool plot;
 };
 
-void SS_DETECT(struct ss_data *s, double *t,
-   double *t_prev, double *sense, double *sw_trig,
-   double *param1, double *param2, double *param3, double *param4);
 void FRA_CORE(struct fra_data *f, double *t, double *t_prev,
       double *in1, double *in2, double *th);
 
@@ -211,6 +208,12 @@ extern "C" __declspec(dllexport) void fra_v5(struct sFRA_V5 **opaque, double t, 
          fprintf(fptr,"Frequency,IN2/IN1\n");
          fclose(fptr);
       }
+
+      // BPF initialization
+      inst->fra.in1d = 0;
+      inst->fra.in1q = IN1 * 1.414213562373; // x sqrt(2)
+      inst->fra.in2d = 0;
+      inst->fra.in2q = IN2 * 1.414213562373;
    }
    else
    {
@@ -237,30 +240,36 @@ extern "C" __declspec(dllexport) void fra_v5(struct sFRA_V5 **opaque, double t, 
 
 void FRA_CORE(struct fra_data *f, double *t, double *t_prev, double *in1, double *in2, double *th)
 {
+   // band pass filter
+   f->in1q_inp = f->in1q_in;
+   f->in1q_in = 2 * M_PI * f->freq * f->in1d;
+   f->in1q += 0.5 * (f->in1q_in + f->in1q_inp) * (*t - *t_prev);
+   f->in1d_inp = f->in1d_in;
+   f->in1d_in = 2 * M_PI * f->freq * (f->bpf_k * (*in1 - f->in1d) - f->in1q);
+   f->in1d += 0.5 * (f->in1d_in + f->in1d_inp) * (*t - *t_prev);
+
+   f->in2q_inp = f->in2q_in;
+   f->in2q_in = 2 * M_PI * f->freq * f->in2d;
+   f->in2q += 0.5 * (f->in2q_in + f->in2q_inp) * (*t - *t_prev);
+   f->in2d_inp = f->in2d_in;
+   f->in2d_in = 2 * M_PI * f->freq * (f->bpf_k * (*in2 - f->in2d) - f->in2q);
+   f->in2d += 0.5 * (f->in2d_in + f->in2d_inp) * (*t - *t_prev);
+
+   // select whether to use the input signal directly or use BPF output
+   double signal1;
+   double signal2;
    if(f->bpf_on_off == 0)
    {
-      f->in1q = 0;
-      f->in1d = *in1;
-      f->in2q = 0;
-      f->in2d = *in2;
+      signal1 = *in1;
+      signal2 = *in2;
    }
    else
    {
-      f->in1q_inp = f->in1q_in;
-      f->in1q_in = 2 * M_PI * f->freq * f->in1d;
-      f->in1q += 0.5 * (f->in1q_in + f->in1q_inp) * (*t - *t_prev);
-      f->in1d_inp = f->in1d_in;
-      f->in1d_in = 2 * M_PI * f->freq * (f->bpf_k * (*in1 - f->in1d) - f->in1q);
-      f->in1d += 0.5 * (f->in1d_in + f->in1d_inp) * (*t - *t_prev);
-
-      f->in2q_inp = f->in2q_in;
-      f->in2q_in = 2 * M_PI * f->freq * f->in2d;
-      f->in2q += 0.5 * (f->in2q_in + f->in2q_inp) * (*t - *t_prev);
-      f->in2d_inp = f->in2d_in;
-      f->in2d_in = 2 * M_PI * f->freq * (f->bpf_k * (*in2 - f->in2d) - f->in2q);
-      f->in2d += 0.5 * (f->in2d_in + f->in2d_inp) * (*t - *t_prev);
+      signal1 = f->in1d;
+      signal2 = f->in2d;
    }
 
+   // fourier series integral using variable step trapezoidal integration
    double cth = cos(*th);
    double sth = sin(*th);
 
@@ -269,10 +278,10 @@ void FRA_CORE(struct fra_data *f, double *t, double *t_prev, double *in1, double
    f->x2ap = f->x2a;
    f->x2bp = f->x2b;
 
-   f->x1a = sth * f->in1d;
-   f->x1b = cth * f->in1d;
-   f->x2a = sth * f->in2d;
-   f->x2b = cth * f->in2d;
+   f->x1a = sth * signal1;
+   f->x1b = cth * signal1;
+   f->x2a = sth * signal2;
+   f->x2b = cth * signal2;
 
    f->in1a += 0.5 * (f->x1a + f->x1ap) * (*t - *t_prev);
    f->in1b += 0.5 * (f->x1b + f->x1bp) * (*t - *t_prev);
@@ -314,37 +323,24 @@ void FRA_CORE(struct fra_data *f, double *t, double *t_prev, double *in1, double
             }
          }
 
+         // calculate the bpf damping constant
+         f->bpf_k = 8 / (0.5 * ts * 2 * M_PI * f->freq);
+         if(f->bpf_k > 2) f->bpf_k = 2;
+         if(f->bpf_k < 0.1) f->bpf_k = 0.1;
+
          // activate bpf according to the following rule
-         // then reset the bpf everytime switching to new frequency
-         // only enable the input bpf when bpf_k is <= 1, and limit bpf_k <=0.25
          ts = f->dwell_period/f->freq;
          if(ts < f->dwell_mintime)
          {
             ts = f->dwell_mintime;
-            
-            f->bpf_k = 8 / (0.5 * ts * 2 * M_PI * f->freq);
-            if(f->bpf_k < 0.25) f->bpf_k = 0.25;
-            if(f->bpf_k <= 1)f->bpf_on_off = 1;
+            if(f->bpf_k <= 1) f->bpf_on_off = 1;
             else f->bpf_on_off = 0;
+
          }
          else
          {
             f->bpf_on_off = 0;
          }
-
-         f->in1q_inp = 0;
-         f->in1q_in = 0;
-         f->in1q = 0;
-         f->in1d_inp = 0;
-         f->in1d_in = 0;
-         f->in1d = 0;
-
-         f->in2q_inp = 0;
-         f->in2q_in = 0;
-         f->in2q = 0;
-         f->in2d_inp = 0;
-         f->in2d_in = 0;
-         f->in2d = 0;         
 
          f->tsampling = *t + ts;
       }
