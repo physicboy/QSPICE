@@ -389,14 +389,14 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
             in1ph = in1ph + f->in1wrap;
             in2ph = in2ph + f->in2wrap;
 
-            if(in1ph > (f->in1ph + 1800))
+            if(in1ph > (f->in1ph + 270))
             {
                f->in1wrap -= 360;
                in1ph += f->in1wrap;
             }
             else
             {
-               if(in1ph < (f->in1ph - 180))
+               if(in1ph < (f->in1ph - 270))
                {
                   f->in1wrap += 360;
                   in1ph += f->in1wrap;
