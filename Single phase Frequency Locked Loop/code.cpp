@@ -123,7 +123,7 @@ void FLL(FLL_VAR *a, double *in, double bpf_k)
 {
    double err;
 
-   err = (*in / VIN_NOM; - a->d - a->os);
+   err = (*in / VIN_NOM - a->d - a->os);
 
    a->w += err * a->q * -50 * bpf_k * W_NOM * TSAMPLING;
 
