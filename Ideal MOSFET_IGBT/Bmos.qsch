@@ -1,0 +1,29 @@
+ÿØÿÛ«schematic
+  «component (-200,-300) 0 0
+    «symbol B3
+      «type: B»
+      «description: Behavioral Resistor»
+      «shorted pins: false»
+      «line (0,200) (0,180) 0 0 0x1000000 -1 -1»
+      «line (0,-180) (0,-200) 0 0 0x1000000 -1 -1»
+      «zigzag (-80,180) (80,-180) 0 0 0 0x1000000 -1 -1»
+      «text (100,150) 1 7 0 0x1000000 -1 -1 "B2"»
+      «text (-800,-1200) 1 7 1 0x1000000 -1 -1 "R=if(v(S,D)<=vrevlim,if(v(G)&&v(D,S)>=vfwdlim,rfwd*v(D,S)/(v(D,S)-vfwd), roff),rrev*v(S,D)/(v(S,D)-vrev))"»
+      «text (-800,-1700) 1 7 0 0x1000000 -1 -1 "R=if(v(G),rfwd,if(v(S,D)<=vrevlim,roff,rrev*v(S,D)/(v(S,D)-vrev)))"»
+      «pin (0,200) (0,0) 1 0 0 0x0 -1 "-"»
+      «pin (0,-200) (0,0) 1 0 0 0x0 -1 "+"»
+    »
+  »
+  «net (-200,300) 1 14 1 "D"»
+  «net (-200,-900) 1 13 1 "S"»
+  «net (-900,-600) 1 14 1 "G"»
+  «wire (-200,300) (-200,-100) "D"»
+  «wire (-200,-500) (-200,-900) "S"»
+  «rect (-900,300) (150,-900) 0 0 2 0xff0000 0x1000000 -1 0 -1»
+  «text (450,0) 1 7 0 0x1000000 -1 -1 "ï»¿.param rfwd=1m rrev=1m roff=1E7 vrev=2 vfwd=2"»
+  «text (450,-450) 1 7 0 0x1000000 -1 -1 "ï»¿.param vrevlim=vrev*(roff/rrev)/(roff/rrev - 1)"»
+  «text (450,-650) 1 7 0 0x1000000 -1 -1 "ï»¿.param vfwdlim=vfwd*(roff/rfwd)/(roff/rfwd - 1)"»
+  «text (-1350,-1300) 1 7 1 0x1000000 -1 -1 "ï»¿Ideal IGBT switch (with forward voltage drop) : :"»
+  «text (-1350,-1800) 1 7 1 0x1000000 -1 -1 "ï»¿Ideal MOSFET switch : :"»
+»
+
