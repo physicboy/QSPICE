@@ -1,0 +1,21 @@
+ÿØÿÛ«symbol C
+  «type: C»
+  «description: Capacitor»
+  «shorted pins: false»
+  «line (0,0) (0,-160) 0 0 0x1000000 -1 -1»
+  «line (0,-240) (0,-400) 0 0 0x1000000 -1 -1»
+  «rect (-130,-240) (130,-230) 0 0 0 0x1000000 0x3000000 -1 0 -1»
+  «rect (-130,-170) (130,-160) 0 0 0 0x1000000 0x3000000 -1 0 -1»
+  «ellipse (-60,-40) (-30,-70) 0 0 0 0x1000000 0x3000000 -1 -1»
+  «text (150,50) 1 7 0 0x1000000 -1 -1 "C1"»
+  «text (150,-150) 1 7 0 0x1000000 -1 -1 "<value>"»
+  «text (100,-300) 0.5 7 0 0x1000000 -1 -1 "rser=<10m>"»
+  «text (100,-400) 0.5 7 0 0x1000000 -1 -1 "rpar=<1G>"»
+  «text (100,-500) 0.5 7 0 0x1000000 -1 -1 "ic=<0>"»
+  «text (100,-600) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
+  «text (100,-750) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
+  «text (100,-900) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
+  «text (100,-1050) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
+  «pin (0,0) (0,0) 1 0 0 0x0 -1 "+"»
+  «pin (0,-400) (0,0) 1 0 0 0x0 -1 "-"»
+»

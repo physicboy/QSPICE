@@ -1,0 +1,33 @@
+ÿØÿÛ«symbol B-IGBT
+  «type: X»
+  «description: B-Source IGBT»
+  «library file: |.subckt Bigbt C E G\nB1 E C I=if(v(E,C)<=vrevlim,if(v(G)&&v(C,E)>=vfwdlim,-(v(C,E)-vfwdlim)/rfwd, V(E,C)/roff),(v(E,C)-vrevlim)/rrev)\n.param vrevlim=vrev*(roff/rrev)/(roff/rrev - 1)\n.param vfwdlim=vfwd*(roff/rfwd)/(roff/rfwd - 1)\n.ends Bigbt»
+  «shorted pins: false»
+  «line (0,130) (0,200) 0 0 0x1000000 -1 -1»
+  «line (70,-150) (0,-150) 0 0 0x1000000 -1 -1»
+  «line (0,150) (70,150) 0 0 0x1000000 -1 -1»
+  «line (0,-130) (0,-200) 0 0 0x1000000 -1 -1»
+  «line (0,130) (-100,30) 0 0 0x1000000 -1 -1»
+  «line (-100,-30) (0,-130) 0 0 0x1000000 -1 -1»
+  «line (-120,0) (-200,0) 0 0 0x1000000 -1 -1»
+  «line (-100,100) (-100,-100) 0 0 0x1000000 -1 -1»
+  «line (-120,100) (-120,-100) 0 0 0x1000000 -1 -1»
+  «line (100,40) (40,40) 0 0 0x1000000 -1 -1»
+  «line (70,150) (70,-150) 0 0 0x1000000 -1 -1»
+  «triangle (0,-130) (-35,-75) (-55,-95) 0 0 0x1000000 0x3000000 -1 -1»
+  «triangle (70,40) (40,-40) (100,-40) 0 0 0x1000000 0x3000000 -1 -1»
+  «text (200,200) 1 7 0 0x1000000 -1 -1 "BQ1"»
+  «text (600,200) 0.5 7 2 0x1000000 -1 -1 "Bigbt"»
+  «text (200,50) 0.5 7 0 0x1000000 -1 -1 "rfwd=<1m>"»
+  «text (200,-50) 0.5 7 0 0x1000000 -1 -1 "vfwd=<1.5>"»
+  «text (200,-150) 0.5 7 0 0x1000000 -1 -1 "rrev=<1m>"»
+  «text (200,-250) 0.5 7 0 0x1000000 -1 -1 "vrev=<1.5>"»
+  «text (200,-350) 0.5 7 0 0x1000000 -1 -1 "roff=<1G>"»
+  «text (100,-500) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
+  «text (100,-650) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
+  «text (100,-800) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
+  «text (100,-950) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
+  «pin (0,200) (20,0) 1 15 0 0x0 -1 "C"»
+  «pin (0,-200) (-20,0) 1 15 0 0x0 -1 "E"»
+  «pin (-200,0) (0,0) 1 15 0 0x0 -1 "G"»
+»
