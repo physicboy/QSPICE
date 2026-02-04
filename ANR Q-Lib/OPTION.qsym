@@ -1,6 +1,5 @@
 ÿØÿÛ«symbol OPTION
   «type: .»
-  «description: for PWL switching converter simulation»
   «shorted pins: false»
   «line (0,-400) (5300,-400) 0 0 0x1000000 -1 -1»
   «line (1800,-1750) (1800,-400) 0 0 0x1000000 -1 -1»
@@ -39,4 +38,13 @@
   «text (100,500) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
   «text (100,350) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
   «text (1250,-500) 1 7 1 0x1000000 -1 -1 ":"»
+  «text (3454,-700) 0.5 11 1 0x1000000 -1 -1 "(0.1m~1m)"»
+  «text (3454,-900) 0.5 11 1 0x1000000 -1 -1 "(0.1u~1u)"»
+  «text (3454,-1100) 0.5 11 1 0x1000000 -1 -1 "(10u~1m)"»
+  «text (3454,-1300) 0.5 11 1 0x1000000 -1 -1 "(1p~1n)"»
+  «text (3454,-1500) 0.5 11 1 0x1000000 -1 -1 "(2.5~7)"»
+  «text (5254,-700) 0.5 11 1 0x1000000 -1 -1 "(1f)"»
+  «text (5254,-900) 0.5 11 1 0x1000000 -1 -1 "(1f~1p)"»
+  «text (5254,-1100) 0.5 11 1 0x1000000 -1 -1 "(1n)"»
+  «text (5304,-1800) 0.5 11 1 0x1000000 -1 -1 "cshunt, gshunt, gmin, and cull time can be removed if not needed"»
 »

@@ -1,6 +1,5 @@
 ÿØÿÛ«symbol B-MOSFET
   «type: X»
-  «description: B-Source MOSFET»
   «library file: |.subckt Bmos D S G\nB1 S D I=if(v(G),V(S,D)/rfwd,if(v(S,D)>vrevlim,(v(S,D)-vrevlim)/rrev,v(S,D)/roff))\n.param vrevlim=vrev*(roff/rrev)/(roff/rrev - 1)\n.ends Bmos»
   «shorted pins: false»
   «line (0,200) (0,130) 0 0 0x1000000 -1 -1»

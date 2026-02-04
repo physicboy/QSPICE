@@ -1,6 +1,5 @@
 ÿØÿÛ«symbol B-IGBT
   «type: X»
-  «description: B-Source IGBT»
   «library file: |.subckt Bigbt C E G\nB1 E C I=if(v(E,C)<=vrevlim,if(v(G)&&v(C,E)>=vfwdlim,-(v(C,E)-vfwdlim)/rfwd, V(E,C)/roff),(v(E,C)-vrevlim)/rrev)\n.param vrevlim=vrev*(roff/rrev)/(roff/rrev - 1)\n.param vfwdlim=vfwd*(roff/rfwd)/(roff/rfwd - 1)\n.ends Bigbt»
   «shorted pins: false»
   «line (0,130) (0,200) 0 0 0x1000000 -1 -1»

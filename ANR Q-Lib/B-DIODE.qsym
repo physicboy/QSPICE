@@ -1,6 +1,5 @@
 ÿØÿÛ«symbol B-DIODE
   «type: X»
-  «description: B-Source Diode»
   «library file: |.subckt Diode K A\nB4 A K I=if(v(A,K)>vfwdlim,(v(A,K)-vfwdlim)/rfwd,v(A,K)/roff)\n.param rfwd=1m roff=1E9 vfwd=1\n.param vfwdlim=vfwd*(roff/rfwd)/(roff/rfwd - 1)\n.ends Diode»
   «shorted pins: false»
   «line (100,-120) (-100,-120) 0 0 0x1000000 -1 -1»
