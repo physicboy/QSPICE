@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "compilerPath": "C:\\program files\\qspice\\dm\\bin\\dmc.exe",
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c99",
+            "includePath": [
+                "${workspaceFolder}",
+                "C:/Program Files/QSPICE/dm/include"
+            ],
+            "defines": [
+                "_DEBUG"
+            ]
+        }
+    ],
+    "version": 4
+}
