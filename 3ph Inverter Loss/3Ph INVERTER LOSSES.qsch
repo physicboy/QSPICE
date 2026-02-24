@@ -676,7 +676,7 @@
       «text (-99,504) 0.681 7 0 0x1000000 -1 -1 "PWL_LOSS/loss_meas"»
       «text (-400,-750) 0.5 7 0 0x1000000 -1 -1 "double rgon = 5"»
       «text (300,-750) 0.5 7 0 0x1000000 -1 -1 "double rgoff = 5"»
-      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "PWL_LOSS/IMZA75R040M1H.txt""»
+      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "IMZA75R040M1H""»
       «text (1000,-850) 0.5 7 0 0x1000000 -1 -1 "double max_prd = 100µ"»
       «text (1000,-750) 0.5 7 0 0x1000000 -1 -1 "double Npara = 1"»
       «text (-400,-850) 0.5 7 0 0x1000000 -1 -1 "double Rds_k = 1"»
@@ -706,7 +706,7 @@
       «text (-99,504) 0.681 7 0 0x1000000 -1 -1 "PWL_LOSS/loss_meas"»
       «text (-400,-750) 0.5 7 0 0x1000000 -1 -1 "double rgon = 5"»
       «text (300,-750) 0.5 7 0 0x1000000 -1 -1 "double rgoff = 5"»
-      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "PWL_LOSS/IMZA75R040M1H.txt""»
+      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "IMZA75R040M1H""»
       «text (1000,-850) 0.5 7 0 0x1000000 -1 -1 "double max_prd = 100µ"»
       «text (1000,-750) 0.5 7 0 0x1000000 -1 -1 "double Npara = 1"»
       «text (-400,-850) 0.5 7 0 0x1000000 -1 -1 "double Rds_k = 1"»
@@ -736,7 +736,7 @@
       «text (-99,504) 0.681 7 0 0x1000000 -1 -1 "PWL_LOSS/loss_meas"»
       «text (-400,-750) 0.5 7 0 0x1000000 -1 -1 "double rgon = 5"»
       «text (300,-750) 0.5 7 0 0x1000000 -1 -1 "double rgoff = 5"»
-      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "PWL_LOSS/IMZA75R040M1H.txt""»
+      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "IMZA75R040M1H""»
       «text (1000,-850) 0.5 7 0 0x1000000 -1 -1 "double max_prd = 100µ"»
       «text (1000,-750) 0.5 7 0 0x1000000 -1 -1 "double Npara = 1"»
       «text (-400,-850) 0.5 7 0 0x1000000 -1 -1 "double Rds_k = 1"»
@@ -766,7 +766,7 @@
       «text (-99,504) 0.681 7 0 0x1000000 -1 -1 "PWL_LOSS/loss_meas"»
       «text (-400,-750) 0.5 7 0 0x1000000 -1 -1 "double rgon = 5"»
       «text (300,-750) 0.5 7 0 0x1000000 -1 -1 "double rgoff = 5"»
-      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "PWL_LOSS/IMZA75R040M1H.txt""»
+      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "IMZA75R040M1H""»
       «text (1000,-850) 0.5 7 0 0x1000000 -1 -1 "double max_prd = 100µ"»
       «text (1000,-750) 0.5 7 0 0x1000000 -1 -1 "double Npara = 1"»
       «text (-400,-850) 0.5 7 0 0x1000000 -1 -1 "double Rds_k = 1"»
@@ -796,7 +796,7 @@
       «text (-99,504) 0.681 7 0 0x1000000 -1 -1 "PWL_LOSS/loss_meas"»
       «text (-400,-750) 0.5 7 0 0x1000000 -1 -1 "double rgon = 5"»
       «text (300,-750) 0.5 7 0 0x1000000 -1 -1 "double rgoff = 5"»
-      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "PWL_LOSS/IMZA75R040M1H.txt""»
+      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "IMZA75R040M1H""»
       «text (1000,-850) 0.5 7 0 0x1000000 -1 -1 "double max_prd = 100µ"»
       «text (1000,-750) 0.5 7 0 0x1000000 -1 -1 "double Npara = 1"»
       «text (-400,-850) 0.5 7 0 0x1000000 -1 -1 "double Rds_k = 1"»
@@ -826,7 +826,7 @@
       «text (-99,504) 0.681 7 0 0x1000000 -1 -1 "PWL_LOSS/loss_meas"»
       «text (-400,-750) 0.5 7 0 0x1000000 -1 -1 "double rgon = 5"»
       «text (300,-750) 0.5 7 0 0x1000000 -1 -1 "double rgoff = 5"»
-      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "PWL_LOSS/IMZA75R040M1H.txt""»
+      «text (-400,-650) 0.5 7 0 0x1000000 -1 -1 "char *fname = "IMZA75R040M1H""»
       «text (1000,-850) 0.5 7 0 0x1000000 -1 -1 "double max_prd = 100µ"»
       «text (1000,-750) 0.5 7 0 0x1000000 -1 -1 "double Npara = 1"»
       «text (-400,-850) 0.5 7 0 0x1000000 -1 -1 "double Rds_k = 1"»
