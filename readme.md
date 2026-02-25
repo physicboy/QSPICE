@@ -21,3 +21,5 @@ Other top user contributors for Qspice workflow/method/techniques:
 @masashi.nogawa [PyQSPICE Scripting Tool](https://github.com/Qorvo/PyQSPICE).
 
 @mgyger [Mgyer for various custom Qspice symbols](https://gitlab.com/mgyger/qspice-symbols/).
+
+This work is licensed under Apache 2.0 to encourage both adoption by both open source community and propietary software development.
