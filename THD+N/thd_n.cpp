@@ -1,9 +1,22 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Automatically generated C++ file on Thu Dec 11 14:44:05 2025
 //
 // To build with Digital Mars C++ Compiler:
 //
 //    dmc -mn -WD thd_n.cpp kernel32.lib
-
 #include <malloc.h>
 #include <math.h>
 
@@ -92,86 +105,3 @@ extern "C" __declspec(dllexport) void thd_n(struct sTHD_N **opaque, double t, un
       if(inst->meas == 0)
       {
          inst->meas = 1;
-
-         inst->ins1p = ins1; inst->inc1p = inc1;
-         inst->ins2p = ins2; inst->inc2p = inc2;
-         inst->ins3p = ins3; inst->inc3p = inc3;
-
-         inst->i1p = i1;
-         inst->i2p = i2;
-         inst->i3p = i3;
-      }
-      else
-      {
-         inst->is1 += 0.5 * (ins1 + inst->ins1p) * dt;
-         inst->ic1 += 0.5 * (inc1 + inst->inc1p) * dt;
-         inst->isum1 += 0.5 * (i1 * i1 + inst->i1p * inst->i1p) * dt;
-
-         inst->is2 += 0.5 * (ins2 + inst->ins2p) * dt;
-         inst->ic2 += 0.5 * (inc2 + inst->inc2p) * dt;
-         inst->isum2 += 0.5 * (i2 * i2 + inst->i2p * inst->i2p) * dt;
-
-         inst->is3 += 0.5 * (ins3 + inst->ins3p) * dt;
-         inst->ic3 += 0.5 * (inc3 + inst->inc3p) * dt;
-         inst->isum3 += 0.5 * (i3 * i3 + inst->i3p * inst->i3p) * dt;
-
-         inst->ins1p = ins1; inst->inc1p = inc1;
-         inst->ins2p = ins2; inst->inc2p = inc2;
-         inst->ins3p = ins3; inst->inc3p = inc3;
-
-         inst->i1p = i1;
-         inst->i2p = i2;
-         inst->i3p = i3;
-      }
-   }
-
-   if(!printed)
-   {
-      if(t > stop)
-      {
-         printed = 1;
-
-         double a;
-         double b;
-         double x;
-
-         double T = stop - start;
-
-         a = inst->ic1 * 2. / T;
-         b = inst->is1 * 2. / T;
-         double fund1 = sqrt(a * a + b * b)/sqrt(2.);
-         double rms1 = sqrt(inst->isum1 / T); x = rms1 / fund1;
-         double thd1 = sqrt(fabs(x * x - 1));
-
-         a = inst->ic2 * 2. / T;
-         b = inst->is2 * 2. / T;
-         double fund2 = sqrt(a * a + b * b)/sqrt(2);
-         double rms2 = sqrt(inst->isum2 / T); x = rms2 / fund2;
-         double thd2 = sqrt(fabs(x * x - 1));
-
-         a = inst->ic3 * 2. / T;
-         b = inst->is3 * 2. / T;
-         double fund3 = sqrt(a * a + b * b)/sqrt(2.);
-         double rms3 = sqrt(inst->isum3 / T); x = rms3 / fund3;
-         double thd3 = sqrt(fabs(x * x - 1));
-
-         Display("fund1 = %.5f, rms1 = %.5f, thd1 = %.5f %%\n", fund1, rms1, 100. * thd1);
-         Display("fund2 = %.5f, rms2 = %.5f, thd2 = %.5f %%\n", fund2, rms2, 100. * thd2);
-         Display("fund3 = %.5f, rms3 = %.5f, thd3 = %.5f %%\n", fund3, rms3, 100. * thd3);
-      }
-   }
-
-   inst->tprev = t;
-}
-
-extern "C" __declspec(dllexport) double MaxExtStepSize(struct sTHD_N *inst, double t)
-{
-   if(t < inst->start){return inst->start - inst->tprev;}
-   else if(t < inst->stop){return inst->stop - inst->tprev;}
-   else return 1e308; // implement a good choice of max timestep size that depends on struct sTHD_N
-}
-
-extern "C" __declspec(dllexport) void Destroy(struct sTHD_N *inst)
-{
-   free(inst);
-}
