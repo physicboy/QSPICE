@@ -2,19 +2,19 @@
   «type: X»
   «library file: |.subckt I-SENSE + - o+ o-\nH1 o+ o- V1 G\nV1 + - 0\n.ends I-SENSE»
   «shorted pins: false»
-  «line (100,0) (300,0) 0 0 0x1000000 -1 -1»
+  «line (100,0) (300,0) 5 0 0x1000000 -1 -1»
   «line (80,-150) (120,-150) 0 0 0x1000000 -1 -1»
   «line (280,-150) (320,-150) 0 0 0x1000000 -1 -1»
   «line (100,-170) (100,-130) 0 0 0x1000000 -1 -1»
-  «rect (0,-200) (400,50) 0 0 0 0x1000000 0xffff -1 0 -1»
+  «rect (0,-200) (400,50) 0 0 0 0x1000000 0x1000000 -1 0 -1»
   «triangle (250,-20) (250,20) (300,0) 0 0 0x1000000 0x3000000 -1 -1»
-  «text (100,50) 1 6 0 0x1000000 -1 -1 "X1"»
+  «text (200,50) 1 14 0 0x1000000 -1 -1 "CS1"»
   «text (800,0) 1 0 2 0x1000000 -1 -1 "I-SENSE"»
   «text (100,-300) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
   «text (100,-450) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
   «text (100,-600) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
   «text (100,-750) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
-  «text (200,-50) 0.5 0 0 0x0 -1 -1 "G=<1>"»
+  «text (200,-50) 0.5 0 0 0x1000000 -1 -1 "G=<1>"»
   «pin (0,0) (0,0) 1 15 0 0x0 -1 "+"»
   «pin (400,0) (20,0) 1 15 0 0x0 -1 "-"»
   «pin (100,-200) (0,0) 1 15 0 0x0 -1 "o+"»

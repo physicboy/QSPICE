@@ -1,6 +1,6 @@
 ÿØÿÛ«symbol B-SWITCH
   «type: X»
-  «library file: |.subckt Bsw D1 D2 G\nB1 D1 D2 I=if(v(G),v(D2,D1)/ron,v(D2,D1)/roff)\n.ends Bsw»
+  «library file: |.subckt Bsw D1 D2 G\nB1 D1 D2 I=if(v(G)>0.1,v(D1,D2)/ron,v(D1,D2)/roff)\n.ends Bsw»
   «shorted pins: false»
   «line (0,200) (0,100) 0 0 0x1000000 -1 -1»
   «line (0,-100) (0,-200) 0 0 0x1000000 -1 -1»
