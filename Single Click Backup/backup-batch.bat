@@ -44,4 +44,3 @@ REM === COMPRESS (exclude previous QSPICE_BACKUP zip files) ===
 echo.
 echo Created: %ZIPFILE%
 endlocal
-pause
