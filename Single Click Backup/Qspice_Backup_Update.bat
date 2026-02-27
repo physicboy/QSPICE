@@ -1,4 +1,14 @@
 @echo off
+:: Check for admin rights
+net session >nul 2>&1
+if %errorlevel% NEQ 0 (
+    echo Requesting administrative privileges...
+    powershell -Command "Start-Process '%~f0' -Verb runAs"
+    exit /b
+)
+
+echo Running as administrator!
+
 setlocal
 
 REM === TARGET FOLDER ===
@@ -33,5 +43,8 @@ REM === COMPRESS (exclude previous QSPICE_BACKUP zip files) ===
 
 echo.
 echo Created: %ZIPFILE%
+
+REM === Then run updater ===
+start "" "C:\Program Files\QSPICE\Update.exe"
+
 endlocal
-pause
