@@ -402,10 +402,10 @@
   «wire (2400,-200) (1600,-200) "GND"»
   «wire (400,-200) (400,-400) "GND"»
   «wire (1600,2000) (2100,2000) "Vout"»
-  «text (-5000,4500) 1 7 0 0x1000000 -1 -1 "ï»¿.tran 0 40m 0 1Âµ uic"»
+  «text (-5000,4500) 1 7 0 0x1000000 -1 -1 "ï»¿.tran 0 40m 39m 1Âµ uic"»
   «text (-1400,-1900) 1 7 0 0x1000000 -1 -1 "ï»¿.model SA SW ron=100m roff=10e6 vt=0.5 vh=0"»
   «text (-1400,-2150) 1 7 0 0x1000000 -1 -1 "ï»¿.model DA D ron=100m roff=10e6 vfwd=4"»
-  «text (-5000,4300) 1 7 0 0x1000000 -1 -1 "ï»¿.options method=gear"»
+  «text (-5000,4300) 1 7 0 0x1000000 -1 -1 "ï»¿.options method=gear absolutetime=true"»
   «text (-5000,3850) 1 7 0 0x1000000 -1 -1 "ï»¿.param f=125K"»
   «text (-5000,3250) 1 7 0 0x1000000 -1 -1 "ï»¿.param Cres=1/(2*pi*f*2*pi*f*Lres)"»
   «text (-1400,-2600) 1 7 0 0x1000000 -1 -1 "ï»¿.model SB SW ron=10m roff=10e6 vt=0.5 vh=0"»
