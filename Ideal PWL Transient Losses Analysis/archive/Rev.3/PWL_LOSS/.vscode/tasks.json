@@ -1,0 +1,38 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "*** DMC 32-bit DLL *** dmc.exe build active file",
+			"command": "C:\\program files\\qspice\\dm\\bin\\dmc.exe",
+			"args": [
+				"-mn",
+				"-WD",
+				"${file}",
+				"kernel32.lib"
+			],
+			"options": {},
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: C:\\Program Files\\QSPICE\\dm\\bin\\dmc.exe"
+		},
+		{
+			"label": "clean only",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"del /Q *.obj *.def *.map 2>nul"
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"presentation": {
+				"clear": true
+			}
+		}
+	]
+  }

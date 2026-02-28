@@ -4,7 +4,8 @@ REM QSPICE Dark Mode Preferences
 REM ==============================
 
 REM --- Schematic editor ---
-reg add "HKCU\Software\Marcus Aurelius Software LLC\QSPICE\[Preferences]" /v CADBackgroundColor /t REG_SZ /d 0x3c3c3c /f
+REM reg add "HKCU\Software\Marcus Aurelius Software LLC\QSPICE\[Preferences]" /v CADBackgroundColor /t REG_SZ /d 0x3c3c3c /f
+reg add "HKCU\Software\Marcus Aurelius Software LLC\QSPICE\[Preferences]" /v CADBackgroundColor /t REG_SZ /d 0x000000 /f
 reg add "HKCU\Software\Marcus Aurelius Software LLC\QSPICE\[Preferences]" /v CADbomberSight /t REG_SZ /d 0xffffff /f
 reg add "HKCU\Software\Marcus Aurelius Software LLC\QSPICE\[Preferences]" /v CADbusTapError /t REG_SZ /d 0xff5555 /f
 reg add "HKCU\Software\Marcus Aurelius Software LLC\QSPICE\[Preferences]" /v CADcommentText /t REG_SZ /d 0xff00ff /f

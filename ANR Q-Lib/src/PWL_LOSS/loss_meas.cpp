@@ -1,3 +1,21 @@
+/*
+ * Copyright 2026 Arief Noor Rahman - Power Control Design
+ * 
+ * Project  : Ideal PWL Transient Losses Analysis
+ * Filename : loss_meas.cpp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // Automatically generated C++ file on Wed Jun  4 17:10:55 2025
 //
@@ -7,6 +25,7 @@
 
 #include <malloc.h>
 #include <stdio.h>
+#include <windows.h>
 #include <stdlib.h>
 #include "cJSON.h"
 
@@ -155,8 +174,26 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
 
       struct sLOSS_MEAS *inst = *opaque;
 
-      // 1. Read JSON file
-      FILE *file = fopen("mosfet_loss_model.json", "r");
+      // 1. Get the .dll path then concatenate the "mosfet_loss_model.json"
+
+      char path[MAX_PATH];
+      HMODULE hm = NULL;
+
+      hm = GetModuleHandleA("loss_meas.dll");// literal DLL filename
+      if (!hm) EXIT("error getting DLL path");
+
+      DWORD len = GetModuleFileNameA(hm, path, MAX_PATH);
+      if (len == 0 || len == MAX_PATH) EXIT("error getting DLL path");
+
+      char *lastSlash = strrchr(path, '\\');
+      if (lastSlash)
+         *lastSlash = '\0';
+
+      strcat(path, "\\mosfet_loss_model.json");
+      // Display("%s\n", path);
+
+      // 2. Read JSON file
+      FILE *file = fopen(path, "r");
       if (!file)
       {
          EXIT("error with model_file.json");
@@ -176,7 +213,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
       json_data[length] = '\0';
       fclose(file);
 
-      // 2. Parse JSON
+      // 3. Parse JSON
       cJSON *root = cJSON_Parse(json_data);
       if (!root)
       {
@@ -184,7 +221,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          EXIT("Error parsing JSON");
       }
 
-      // 3. Store the JSON data into local pointers
+      // 4. Store the JSON data into local pointers
       cJSON *model_param   = cJSON_GetObjectItem(root, fname);
       // non-Array
          cJSON *Rdson_ptr        = cJSON_GetObjectItem(model_param, "Rdson");
@@ -200,7 +237,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          cJSON *Tj_ptr           = cJSON_GetObjectItem(model_param, "Tj");
          cJSON *Rds_factor_ptr   = cJSON_GetObjectItem(model_param, "Rds_factor");
 
-      // 4. Extract non-Array values
+      // 5. Extract non-Array values
       inst->lut.Rdson   = Rdson_ptr->valuedouble;
       inst->lut.Ton     = Ton_ptr->valuedouble;
       inst->lut.Toff    = Toff_ptr->valuedouble;
@@ -211,7 +248,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
       inst->lut.size_Isd_Vsd = 0;
       inst->lut.size_Tj_Rds_factor = 0;
 
-      // 5. Extract Array values
+      // 6. Extract Array values
       inst->lut.size_Vds_Eoss = cJSON_GetArraySize(Vds_ptr);
       for (int i = 0; i < inst->lut.size_Vds_Eoss; i++)
       {
@@ -293,7 +330,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
       */
    }
    struct sLOSS_MEAS *inst = *opaque;
-
+   
    /*
    xrdson = MOSFET nominal RDSON
    */

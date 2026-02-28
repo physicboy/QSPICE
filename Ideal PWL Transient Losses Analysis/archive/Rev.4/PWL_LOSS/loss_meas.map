@@ -1,6 +1,6 @@
 
  Start         Length     Name                   Class
- 0003:00000000 0000A9A7H  _TEXT                  CODE 32-bit
+ 0003:00000000 0000A9A8H  _TEXT                  CODE 32-bit
  0003:0000A9A8 000000CCH  ICODE                  ICODE 32-bit
  0004:00000000 00000004H  .CRT$XIA               DATA 32-bit
  0004:00000010 00000004H  .CRT$XIZ               DATA 32-bit
@@ -11,7 +11,7 @@
  0004:00000060 00000004H  .CRT$XTA               DATA 32-bit
  0004:00000070 00000004H  .CRT$XTZ               DATA 32-bit
  0004:00000074 00000000H  IMP__DATA              IMP__DATA 32-bit
- 0004:00000074 000017BAH  _DATA                  DATA 32-bit
+ 0004:00000074 000017BCH  _DATA                  DATA 32-bit
  0004:00001830 00000000H  XIB                    DATA 32-bit
  0004:00001830 0000000CH  XI                     DATA 32-bit
  0004:0000183C 00000000H  XIE                    DATA 32-bit

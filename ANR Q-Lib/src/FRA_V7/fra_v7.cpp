@@ -1,3 +1,22 @@
+/*
+ * Copyright 2026 Arief Noor Rahman - Power Control Design
+ * 
+ * Project  : FRA_project
+ * Filename : fra_v7.cpp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Automatically generated C++ file on Wed Oct 16 12:21:52 2024
 //
 // To build with Digital Mars C++ Compiler:
@@ -9,13 +28,24 @@
 #include <stdio.h>
 #include <string.h>
 
-extern "C" __declspec(dllexport) int (*Display)(const char *format, ...) = 0; // works like printf()
-extern "C" __declspec(dllexport) const double *DegreesC                  = 0; // pointer to current circuit temperature
-extern "C" __declspec(dllexport) const int *StepNumber                   = 0; // pointer to current step number
-extern "C" __declspec(dllexport) const int *NumberSteps                  = 0; // pointer to estimated number of steps
-extern "C" __declspec(dllexport) const char **InstanceName               = 0; // pointer to address of instance name
-extern "C" __declspec(dllexport) const char *QUX                         = 0; // path to QUX.exe
-extern "C" __declspec(dllexport) int (*DFFT)(struct sComplex *u, bool inv, unsigned int N, double scale) = 0;
+extern "C" __declspec(dllexport) void (*Display)(const char *format, ...)       = 0; // works like printf()
+extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)          = 0; // print message like printf() but exit(0) afterward
+extern "C" __declspec(dllexport) const double *DegreesC                         = 0; // pointer to current circuit temperature
+extern "C" __declspec(dllexport) const int *StepNumber                          = 0; // pointer to current step number
+extern "C" __declspec(dllexport) const int *NumberSteps                         = 0; // pointer to estimated number of steps
+extern "C" __declspec(dllexport) const char* const *InstanceName                = 0; // pointer to address of instance name
+extern "C" __declspec(dllexport) const char *QUX                                = 0; // path to QUX.exe
+extern "C" __declspec(dllexport) const bool *ForKeeps                           = 0; // pointer to whether being evaluated non-hypothetically
+extern "C" __declspec(dllexport) const bool *HoldICs                            = 0; // pointer to whether instance initial conditions are being held
+extern "C" __declspec(dllexport) const void *GUI_HWND                           = 0; // pointer to Window handle of QUX.exe
+extern "C" __declspec(dllexport) const double *CKTtime                          = 0;
+extern "C" __declspec(dllexport) const double *CKTdelta                         = 0;
+extern "C" __declspec(dllexport) const int *IntegrationOrder                    = 0;
+extern "C" __declspec(dllexport) const char *InstallDirectory                   = 0;
+extern "C" __declspec(dllexport) double (*EngAtof)(const char **string)         = 0;
+extern "C" __declspec(dllexport) const char *(*BinaryFormat)(unsigned int data)                          = 0; // BinaryFormat(0x1C) returns "0b00011100"
+extern "C" __declspec(dllexport) const char *(*EngFormat   )(double x, const char *units, int numDgts)   = 0; // EngFormat(1e-6, "s", 6) returns "1µs"
+extern "C" __declspec(dllexport) int (*DFFT)(struct sComplex *u, bool inv, unsigned int N, double scale) = 0; // Discrete Fast Fourier Transform
 
 union uData
 {
@@ -120,9 +150,11 @@ struct fra_data
    double in2ph;
    double in1wrap;
    double in2wrap;
+
+   char *fname;
 };
 
-struct sFRA_V6
+struct sFRA_V7
 {
    // declare the structure here
    int   status;
@@ -138,42 +170,42 @@ void FRA_CORE(struct fra_data *f, bool *bpf_on_off,
    double *t, double *t_prev, double *in1, double *in2, double *th);
 
 FILE *fptr;
-char *fname = "fra.csv";
 
-extern "C" __declspec(dllexport) void fra_v6(struct sFRA_V6 **opaque, double t, union uData *data)
+extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, union uData *data)
 {
-   double  IN1           = data[ 0].d; // input
-   double  IN2           = data[ 1].d; // input
-   double  th            = data[ 2].d; // input
-   double  param1        = data[ 3].d; // input
-   double  param2        = data[ 4].d; // input
-   double  param3        = data[ 5].d; // input
-   double  param4        = data[ 6].d; // input
-   double  f_min         = data[ 7].d; // input parameter
-   double  f_max         = data[ 8].d; // input parameter
-   double  a_lo          = data[ 9].d; // input parameter
-   double  a_hi          = data[10].d; // input parameter
-   double  f_lo          = data[11].d; // input parameter
-   double  f_hi          = data[12].d; // input parameter
-   bool    lin0_log1     = data[13].b; // input parameter
-   double  tstep_factor  = data[14].d; // input parameter
-   double  ss_tmax       = data[15].d; // input parameter
-   double  dwell_mintime = data[16].d; // input parameter
-   double  dwell_period  = data[17].d; // input parameter
-   double  meas_mintime  = data[18].d; // input parameter
-   double  meas_period   = data[19].d; // input parameter
-   int     f_step        = data[20].i; // input parameter
-   bool    plot          = data[21].b; // input parameter
-   bool    bpf_off0_on1  = data[22].b; // input parameter
-   double &amp           = data[23].d; // output
-   double &freq          = data[24].d; // output
+   double      IN1            = data[ 0].d; // input
+   double      IN2            = data[ 1].d; // input
+   double      th             = data[ 2].d; // input
+   double      param1         = data[ 3].d; // input
+   double      param2         = data[ 4].d; // input
+   double      param3         = data[ 5].d; // input
+   double      param4         = data[ 6].d; // input
+   double      f_min          = data[ 7].d; // input parameter
+   double      f_max          = data[ 8].d; // input parameter
+   double      a_lo           = data[ 9].d; // input parameter
+   double      a_hi           = data[10].d; // input parameter
+   double      f_lo           = data[11].d; // input parameter
+   double      f_hi           = data[12].d; // input parameter
+   bool        lin0_log1      = data[13].b; // input parameter
+   double      tstep_factor   = data[14].d; // input parameter
+   double      ss_tmax        = data[15].d; // input parameter
+   double      dwell_mintime  = data[16].d; // input parameter
+   double      dwell_period   = data[17].d; // input parameter
+   double      meas_mintime   = data[18].d; // input parameter
+   double      meas_period    = data[19].d; // input parameter
+   int         f_step         = data[20].i; // input parameter
+   bool        plot           = data[21].b; // input parameter
+   bool        bpf_off0_on1   = data[22].b; // input parameter
+   const char * fname        = data[23].str; // input parameter
+   double      &amp           = data[24].d; // output
+   double      &freq          = data[25].d; // output
 
    if(!*opaque)
    {
-      *opaque = (struct sFRA_V6 *) malloc(sizeof(struct sFRA_V6));
-      bzero(*opaque, sizeof(struct sFRA_V6));
+      *opaque = (struct sFRA_V7 *) malloc(sizeof(struct sFRA_V7));
+      bzero(*opaque, sizeof(struct sFRA_V7));
 
-      struct sFRA_V6 *inst = *opaque;
+      struct sFRA_V7 *inst = *opaque;
 
       inst->fra.fmin = f_min;
       inst->fra.fmax = f_max;
@@ -190,7 +222,8 @@ extern "C" __declspec(dllexport) void fra_v6(struct sFRA_V6 **opaque, double t, 
 
       inst->plot = plot;
    }
-   struct sFRA_V6 *inst = *opaque;
+   struct sFRA_V7 *inst = *opaque;
+   inst->fra.fname = (char *)fname;
 
 // Implement module evaluation code here:
    if(inst->status == 0)
@@ -203,11 +236,18 @@ extern "C" __declspec(dllexport) void fra_v6(struct sFRA_V6 **opaque, double t, 
 
       if(inst->status == 1)
       {
+         Display("\n\tparam1 : %f\n\tparam2 : %f\n\tparam3 : %f\n\tparam4 : %f\n", param1, param2, param3, param4);
          Display("\ti\tfreq\tmag(in2/in1)[dB]\targ(in2/in1)[deg]\tmag(in1)[dB]\targ(in1)[deg]\tmag(in2)[dB]\targ(in2)[deg]\n");
 
-         fptr = fopen(fname,"w");
-         fprintf(fptr,"Frequency,IN2/IN1\n");
-         fclose(fptr);
+         if(*StepNumber == 1)
+         {            
+            fptr = fopen(inst->fra.fname,"w");
+            // fprintf(fptr, "Frequency,IN2/IN1\n");
+            fprintf(fptr,"Frequency,");
+            fprintf(fptr,inst->fra.fname);
+            fprintf(fptr,"-IN2/IN1\n");
+            fclose(fptr);
+         }
       }
 
       // BPF initialization
@@ -389,14 +429,14 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
             in1ph = in1ph + f->in1wrap;
             in2ph = in2ph + f->in2wrap;
 
-            if(in1ph > (f->in1ph + 1800))
+            if(in1ph > (f->in1ph + 270))
             {
                f->in1wrap -= 360;
                in1ph += f->in1wrap;
             }
             else
             {
-               if(in1ph < (f->in1ph - 180))
+               if(in1ph < (f->in1ph - 270))
                {
                   f->in1wrap += 360;
                   in1ph += f->in1wrap;
@@ -428,7 +468,7 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
             re = pow(10,in21mag/20)*cos(in21ph*M_PI/180);
             im = pow(10,in21mag/20)*sin(in21ph*M_PI/180);
 
-            fptr = fopen(fname,"a");
+            fptr = fopen(f->fname,"a");
             fprintf(fptr,"%f\t%f,%f\n",freq_p,re,im);
             fclose(fptr);
          }
@@ -437,14 +477,19 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
    }
 }
 
-extern "C" __declspec(dllexport) double MaxExtStepSize(struct sFRA_V6 *inst)
+extern "C" __declspec(dllexport) double MaxExtStepSize(struct sFRA_V7 *inst)
 {
    return inst->maxstep; // implement a good choice of max timestep size that depends on struct sFRA_V3
 }
 
-extern "C" __declspec(dllexport) void Destroy(struct sFRA_V6 *inst)
+extern "C" __declspec(dllexport) void Destroy(struct sFRA_V7 *inst)
 {
-   if(inst->plot) system("\"c:\\Program Files\\QSPICE\\QUX\" fra.csv");
-
+   if(*StepNumber == *NumberSteps)
+   {
+      char *a = "\"c:\\Program Files\\QSPICE\\QUX\" ";
+      strcat(a, inst->fra.fname);
+      if(inst->plot) system(a);
+      a = "";
+   }
    free(inst);
 }

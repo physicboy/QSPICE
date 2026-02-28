@@ -1,0 +1,30 @@
+ÿØÿÛ«symbol
+  «type: X»
+  «description: Machine generated symbol for PWL»
+  «library file: |.subckt PWL vgs vds id Tj pdevice ptotal pon poff pcoss pcond pdt\nØ´X2 «vgs´b vds´d id´d Tj´d» «pon´d poff´d pcond´d pdt´d pcoss´d pdevice´d ptotal´d» «» loss_meas double rgon=rgon double rgoff=rgoff char *fname=mosfet double max_prd=max_prd double Npara=Npara double Rds_k=Rds_k double Pon_k=Pon_k double Poff_k=Poff_k double Pcoss_k=Pcoss_k double Pdt_k=Pdt_k\n.ends PWL»
+  «shorted pins: false»
+  «rect (0,-1000) (900,0) 0 0 0 0xff0000 0x4000000 -1 0 -1»
+  «text (0,100) 1 7 0 0x1000000 -1 -1 "PWL1"»
+  «text (750,100) 1 15 2 0x1000000 -1 -1 "PWL"»
+  «text (0,-1050) 0.5 7 0 0x1000000 -1 -1 "Rgon=5"»
+  «text (400,-1050) 0.5 7 0 0x1000000 -1 -1 "Rgoff=5"»
+  «text (850,-1050) 0.5 7 0 0x1000000 -1 -1 "Npara=1"»
+  «text (0,-1150) 0.5 7 0 0x1000000 -1 -1 "Rds_k=1"»
+  «text (400,-1150) 0.5 7 0 0x1000000 -1 -1 "Pdt_k=1"»
+  «text (850,-1150) 0.5 7 0 0x1000000 -1 -1 "max_prd=100µ"»
+  «text (0,-1250) 0.5 7 0 0x1000000 -1 -1 "Pon_k=1"»
+  «text (400,-1250) 0.5 7 0 0x1000000 -1 -1 "Poff_k=1"»
+  «text (850,-1250) 0.5 7 0 0x1000000 -1 -1 "Pcoss_k=1"»
+  «text (0,-1350) 0.5 7 0 0x1000000 -1 -1 "mosfet="IMZA75R040M1H""»
+  «pin (0,-100) (20,0) 1 7 0 0x0 -1 "vgs"»
+  «pin (0,-300) (20,0) 1 7 0 0x0 -1 "vds"»
+  «pin (0,-500) (20,0) 1 7 0 0x0 -1 "id"»
+  «pin (0,-700) (20,0) 1 7 0 0x0 -1 "Tj"»
+  «pin (900,-300) (-30,0) 1 11 0 0x0 -1 "pdevice"»
+  «pin (900,-100) (-30,0) 1 11 0 0x0 -1 "ptotal"»
+  «pin (900,-500) (-30,0) 0.5 11 0 0x0 -1 "pon"»
+  «pin (900,-600) (-30,0) 0.5 11 0 0x0 -1 "poff"»
+  «pin (900,-700) (-30,0) 0.5 11 0 0x0 -1 "pcoss"»
+  «pin (900,-800) (-30,0) 0.5 11 0 0x0 -1 "pcond"»
+  «pin (900,-900) (-30,0) 0.5 11 0 0x0 -1 "pdt"»
+»

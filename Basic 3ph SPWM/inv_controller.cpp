@@ -1,3 +1,22 @@
+/*
+ * Copyright 2026 Arief Noor Rahman - Power Control Design
+ * 
+ * Project  : Basic 3ph SPWM
+ * Filename : inv_controller.cpp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Automatically generated C++ file on Fri May  2 09:51:57 2025
 //
 // To build with Digital Mars C++ Compiler:
@@ -216,27 +235,35 @@ extern "C" __declspec(dllexport) void inv_controller(struct sINV_CONTROLLER **op
 extern "C" __declspec(dllexport) double MaxExtStepSize(struct sINV_CONTROLLER *inst, double t)
 {
    double maxstep = 0;
-   maxstep = SAMPLING_PRD;
+   if(inst->pwm_data.state_change)
+   {
+      maxstep = TTOL_VAL;
+   }
+   else
+   {
+      maxstep = SAMPLING_PRD;
 
-   MAXSTEP_CALC(inst->pwm_data.mcu_trig)
+      MAXSTEP_CALC(inst->pwm_data.mcu_trig)
 
-   MAXSTEP_CALC(inst->pwm_data.p1on)
-   MAXSTEP_CALC(inst->pwm_data.p1off)
-   MAXSTEP_CALC(inst->pwm_data.p1dly)
-   MAXSTEP_CALC(inst->pwm_data.p2on)
-   MAXSTEP_CALC(inst->pwm_data.p2off)
-   MAXSTEP_CALC(inst->pwm_data.p2dly)
-   MAXSTEP_CALC(inst->pwm_data.p3on)
-   MAXSTEP_CALC(inst->pwm_data.p3off)
-   MAXSTEP_CALC(inst->pwm_data.p3dly)
-
+      MAXSTEP_CALC(inst->pwm_data.p1on)
+      MAXSTEP_CALC(inst->pwm_data.p1off)
+      MAXSTEP_CALC(inst->pwm_data.p1dly)
+      MAXSTEP_CALC(inst->pwm_data.p2on)
+      MAXSTEP_CALC(inst->pwm_data.p2off)
+      MAXSTEP_CALC(inst->pwm_data.p2dly)
+      MAXSTEP_CALC(inst->pwm_data.p3on)
+      MAXSTEP_CALC(inst->pwm_data.p3off)
+      MAXSTEP_CALC(inst->pwm_data.p3dly)
+   }
    return maxstep;
 }
 
+/*
 extern "C" __declspec(dllexport) void Trunc(struct sINV_CONTROLLER *inst, double t, union uData *data, double *timestep)
 {
    if(inst->pwm_data.state_change)*timestep = TTOL_VAL;
 }
+*/
 
 extern "C" __declspec(dllexport) void Destroy(struct sINV_CONTROLLER *inst)
 {

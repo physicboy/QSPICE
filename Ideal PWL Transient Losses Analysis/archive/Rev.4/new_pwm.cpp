@@ -1,22 +1,3 @@
-/*
- * Copyright 2026 Arief Noor Rahman - Power Control Design
- * 
- * Project  : Flyback Sim
- * Filename : new_pwm.cpp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 // Automatically generated C++ file on Mon Sep 16 13:18:27 2024
 //
 // To build with Digital Mars C++ Compiler:
@@ -73,6 +54,8 @@ struct sNEW_PWM
 
   double carrier_prev1;
   double carrier_prev2;
+
+  bool switched;
 };
 
 extern "C" __declspec(dllexport) void new_pwm(struct sNEW_PWM **opaque, double t, union uData *data)
@@ -83,8 +66,8 @@ extern "C" __declspec(dllexport) void new_pwm(struct sNEW_PWM **opaque, double t
    double  dtime     = data[3].d; // input parameter
    double  maxref    = data[4].d; // input parameter
    bool    cmc0_vmc1 = data[5].d; // input parameter
-   double &hi        = data[6].d; // output
-   double &lo        = data[7].d; // output
+   bool    &hi        = data[6].b; // output
+   bool    &lo        = data[7].b; // output
 
    if(!*opaque)
    {
@@ -175,8 +158,14 @@ extern "C" __declspec(dllexport) void new_pwm(struct sNEW_PWM **opaque, double t
       inst->output_delay = inst->output;
    }
 
+   bool hi_p = hi;
+   bool lo_p = lo;
    hi = inst->output & inst->output_delay;
    lo = (1 - inst->output) & (1 - inst->output_delay);
+
+   inst->switched = false;
+   if(hi_p != hi) inst->switched = true;
+   if(lo_p != lo) inst->switched = true;
 
    inst->carrier_prev2 = inst->carrier_prev1;
    inst->carrier_prev1 = carrier;
@@ -204,11 +193,14 @@ extern "C" __declspec(dllexport) void Trunc(struct sNEW_PWM *inst, double t, uni
 
    struct sNEW_PWM tmp = *inst;
 
-   new_pwm(&(&tmp), t, data);
-
-   if((inst->output != tmp.output)||(inst->output_delay != tmp.output_delay))
+   if(inst->switched) *timestep = ttol;
+   else
    {
-      *timestep = ttol;
+      new_pwm(&(&tmp), t, data);
+      if((inst->output != tmp.output)||(inst->output_delay != tmp.output_delay))
+      {
+         if((t - inst->t_prev) > ttol)*timestep = (t - inst->t_prev)*0.5;
+      }
    }
 }
 
