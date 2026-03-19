@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <stdlib.h>
+#include <math.h>
 #include "cJSON.h"
 
 extern "C" __declspec(dllexport) void (*Display)(const char *format, ...)       = 0; // works like printf()
@@ -127,13 +128,15 @@ struct sLOSS_MEAS
       double Eoff;
 
 
-   double pon;
-   double poff;
-   double pcond;
-   double pdt;
-   double pcoss;
-   double pdevice;
-   double ptotal;
+   double pon, pon1;
+   double poff, poff1;
+   double pcond, pcond1;
+   double pdt, pdt1;
+   double pcoss, pcoss1;
+   double pdevice, pdevice1;
+   double ptotal, ptotal1;
+
+   int debug;
 };
 
 // if absolute drain current less than this limit, consider losses are negligible and skip the loss calculation.
@@ -377,8 +380,11 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
             }
          }
          }
-
-         inst->rcond_int += inst->lut.Rdson * rdson_k *
+         
+         // at the t = 0, sometimes simulation start with non-zero
+         // maybe non-physical very large current to charge the cshunt.
+         // add this time limit to ignore including this non-physical current into conduction loss calculation.
+         if(t > 1E-9) inst->rcond_int += inst->lut.Rdson * rdson_k *
                (id_single * id_single + id_p_single * id_p_single) *
                (t - inst->t_prev) * 0.5;
       }
@@ -408,7 +414,10 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
                }
             }
 
-            inst->vfcond_int += vsd * (-id_single - id_p_single) * (t - inst->t_prev) * 0.5;
+            // at the t = 0, sometimes simulation start with non-zero
+            // maybe non-physical very large current to charge the cshunt.
+            // add this time limit to ignore including this non-physical current into body diode conduction loss calculation.
+            if(t > 1E-9) inst->vfcond_int += vsd * (-id_single - id_p_single) * (t - inst->t_prev) * 0.5;
          }
       }
 
@@ -420,33 +429,31 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          if(id_single >= MIN_CURRENT_LIMIT)
          {
             // Compute turn on Loss energy
-            inst->Eon = 0.5 * inst->lut.Ton * inst->vds_p * id_single *
+            inst->Eon += 0.5 * inst->lut.Ton * inst->vds_p * id_single *
                            ((rgon + inst->lut.Rg_int) / (inst->lut.Rg_test + inst->lut.Rg_int)) *
                            Pon_k;
 
             // Compute turn on capacitive loss energy
             //    if Vds is higher than the highest Vds point in the table,
             //    use the Eoss value at the highest Vds point as approximation
+            double Eoss;
             if(inst->vds_p >= inst->lut.Vds[inst->lut.size_Vds_Eoss - 1])
-               inst->Eoss = inst->lut.Eoss[inst->lut.size_Vds_Eoss - 1];
+            {
+               Eoss = inst->lut.Eoss[inst->lut.size_Vds_Eoss - 1];
+            }
             else
             {
                for(int i = 0; i < inst->lut.size_Vds_Eoss; i++)
                {
                   if((inst->lut.Vds[i] <= inst->vds_p) && (inst->vds_p <= inst->lut.Vds[i + 1]))
                   {
-                     inst->Eoss = inst->lut.Eoss[i] + (inst->lut.Eoss[i + 1] - inst->lut.Eoss[i]) *
+                     Eoss = inst->lut.Eoss[i] + (inst->lut.Eoss[i + 1] - inst->lut.Eoss[i]) *
                            (inst->vds_p - inst->lut.Vds[i]) / (inst->lut.Vds[i + 1] - inst->lut.Vds[i]);
                      break;
                   }
                }
             }
-            inst->Eoss = inst->Eoss * Pcoss_k;
-         }
-         else
-         {
-            inst->Eon = 0;
-            inst->Eoss = 0;
+            inst->Eoss += Eoss * Pcoss_k;
          }
       }
 
@@ -457,22 +464,18 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          if(id_p_single >= MIN_CURRENT_LIMIT)
          {
             // Compute turn off Loss energy
-            inst->Eoff = 1. / 6. * inst->lut.Toff * vds * id_p_single *
+            inst->Eoff += 1. / 6. * inst->lut.Toff * vds * id_p_single *
                            ((rgoff + inst->lut.Rg_int) / (inst->lut.Rg_test + inst->lut.Rg_int)) *
                            Poff_k;
-         }
-         else
-         {
-            inst->Eoff = 0;
          }
       }
 
       // update Power loss calculation
-      if(((t - inst->t_marker) >= max_prd) || ((vgs == 0) && (inst->vgs_p == 1)))
+      //bool b = ((vgs == 0) && (inst->vgs_p == 1));
+      if((t - inst->t_marker) >= max_prd)
       {
          // update all the losses measurement
          inst->period = t - inst->t_marker;
-         inst->t_marker = t;
 
          inst->pon   = inst->Eon / inst->period;
          inst->poff  = inst->Eoff / inst->period;
@@ -483,17 +486,28 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          inst->pdevice = (inst->pon + inst->poff + inst->pcond + inst->pdt + inst->pcoss);
          inst->ptotal  = Npara * inst->pdevice;
 
-         inst->rcond_int = 0;
-         inst->vfcond_int = 0;
+         inst->Eon = 0; inst->Eoff = 0;   inst->Eoss = 0;   inst->rcond_int = 0; inst->vfcond_int = 0;
+
+         inst->t_marker = t;
       }
 
-      pon   = inst->pon;
-      poff  = inst->poff;
-      pcond = inst->pcond;
-      pdt   = inst->pdt;
-      pcoss = inst->pcoss;
-      pdevice = inst->pdevice;
-      ptotal  = inst->ptotal;
+      double k = 1. / (1. + 2 * M_PI * (t - inst->t_prev) / (10 * max_prd));
+
+      pon      = pon     * k + inst->pon1     * (1 - k);
+      poff     = poff    * k + inst->poff1    * (1 - k);
+      pcond    = pcond   * k + inst->pcond1   * (1 - k);
+      pdt      = pdt     * k + inst->pdt1     * (1 - k);
+      pcoss    = pcoss   * k + inst->pcoss1   * (1 - k);
+      pdevice  = pdevice * k + inst->pdevice1 * (1 - k);
+      ptotal   = ptotal  * k + inst->ptotal1  * (1 - k);
+
+      inst->pon1      = inst->pon1     * k + inst->pon     * (1 - k);
+      inst->poff1     = inst->poff1    * k + inst->poff    * (1 - k);
+      inst->pcond1    = inst->pcond1   * k + inst->pcond   * (1 - k);
+      inst->pdt1      = inst->pdt1     * k + inst->pdt     * (1 - k);
+      inst->pcoss1    = inst->pcoss1   * k + inst->pcoss   * (1 - k);
+      inst->pdevice1  = inst->pdevice1 * k + inst->pdevice * (1 - k);
+      inst->ptotal1   = inst->ptotal1  * k + inst->ptotal  * (1 - k);
 
       inst->vgs_p = vgs;
       inst->vds_p = vds;

@@ -16,8 +16,8 @@
   «text (100,-500) 1 7 1 0x1000000 -1 -1 "Berkeley Syntax"»
   «text (450,-300) 0.54 7 1 0x1000000 -1 -1 "By Arief Noor Rahman"»
   «text (450,-150) 1 7 1 0x1000000 -1 -1 "Transient option for ideal PWL power electronic"»
-  «text (250,-1000) 1 7 0 0x1000000 -1 -1 "fastmath=<false>"»
-  «text (250,-1200) 1 7 0 0x1000000 -1 -1 "method=<gear>"»
+  «text (100,-1000) 1 7 0 0x1000000 -1 -1 "fastmath=<true>"»
+  «text (100,-1200) 1 7 0 0x1000000 -1 -1 "method=<gear>"»
   «text (2050,-700) 1 7 0 0x1000000 -1 -1 "reltol=<0.1m>"»
   «text (2050,-900) 1 7 0 0x1000000 -1 -1 "abstol=<1u>"»
   «text (2050,-1100) 1 7 0 0x1000000 -1 -1 "vntol=<10u>"»
@@ -27,11 +27,11 @@
   «text (1900,-500) 1 7 1 0x1000000 -1 -1 "Convergence option"»
   «text (3600,-500) 1 7 1 0x1000000 -1 -1 "Convergence aid"»
   «text (3750,-700) 1 7 0 0x1000000 -1 -1 "cshunt=<1f>"»
-  «text (3750,-900) 1 7 0 0x1000000 -1 -1 "gshunt=<1f>"»
+  «text (3750,-900) 1 7 1 0x1000000 -1 -1 "gshunt=<1f>"»
   «text (3750,-1100) 1 7 0 0x1000000 -1 -1 "gmin=<1n>"»
   «text (3600,-1400) 1 7 1 0x1000000 -1 -1 "Waveform save option"»
-  «text (3750,-1600) 1 7 0 0x1000000 -1 -1 "culltime=<100n>"»
-  «text (250,-1400) 1 7 0 0x1000000 -1 -1 "ITL4=<100>"»
+  «text (3750,-1600) 1 7 1 0x1000000 -1 -1 "culltime=<100n>"»
+  «text (100,-1400) 1 7 0 0x1000000 -1 -1 "ITL4=<100>"»
   «text (100,150) 0.735 7 3 0x1000000 -1 -1 "Inspired by KS Kelvin Leung"»
   «text (100,800) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
   «text (100,650) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
@@ -39,12 +39,14 @@
   «text (100,350) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
   «text (1250,-500) 1 7 1 0x1000000 -1 -1 ":"»
   «text (3454,-700) 0.5 11 1 0x1000000 -1 -1 "(0.1m~1m)"»
-  «text (3454,-900) 0.5 11 1 0x1000000 -1 -1 "(0.1u~1u)"»
+  «text (3454,-900) 0.5 11 1 0x1000000 -1 -1 "(0.1u~1m)"»
   «text (3454,-1100) 0.5 11 1 0x1000000 -1 -1 "(10u~1m)"»
-  «text (3454,-1300) 0.5 11 1 0x1000000 -1 -1 "(1p~1n)"»
+  «text (3454,-1300) 0.5 11 1 0x1000000 -1 -1 "(1p~1u)"»
   «text (3454,-1500) 0.5 11 1 0x1000000 -1 -1 "(2.5~7)"»
   «text (5254,-700) 0.5 11 1 0x1000000 -1 -1 "(1f)"»
   «text (5254,-900) 0.5 11 1 0x1000000 -1 -1 "(1f~1p)"»
   «text (5254,-1100) 0.5 11 1 0x1000000 -1 -1 "(1n)"»
   «text (5304,-1800) 0.5 11 1 0x1000000 -1 -1 "cshunt, gshunt, gmin, and cull time can be removed if not needed"»
+  «text (1754,-1000) 0.5 11 1 0x1000000 -1 -1 "(true~false)"»
+  «text (1754,-1200) 0.5 11 1 0x1000000 -1 -1 "(gear~trap)"»
 »
