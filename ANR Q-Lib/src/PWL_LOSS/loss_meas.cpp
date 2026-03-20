@@ -352,16 +352,19 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
    dbg2 = t - inst->t_prev;
    #endif
       // update the loss integration and event detection only when time advances
-
-      double id_single = id / Npara; // current per device
-      double id_p_single = inst->id_p / Npara; // previous current per device
+      int i = 0;
+      bool loop_test = 0;
+      double id_single = 0;
+      double id_p_single = 0;
+      id_single = id / Npara; // current per device
+      id_p_single = inst->id_p / Npara; // previous current per device
 
       // Conduction loss integration update
       if(vgs)
       {
          // for the conduction loss integral where the device VGS is ON (resistive loss)
 
-         double rdson_k;
+         double rdson_k = 0;
 
          if(Tj >= inst->lut.Tj[inst->lut.size_Tj_Rds_factor - 1])
          {
@@ -369,16 +372,19 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          }
          else
          {
-         for(int i = 0; i < inst->lut.size_Tj_Rds_factor; i++)
-         {
-            if((inst->lut.Tj[i] <= Tj) && (Tj <= inst->lut.Tj[i + 1]))
+            loop_test = 0;
+            for(i = 0; i < inst->lut.size_Tj_Rds_factor; i++)
             {
-               rdson_k = inst->lut.Rds_factor[i] +
-                  (inst->lut.Rds_factor[i + 1] - inst->lut.Rds_factor[i]) *
-                  (Tj - inst->lut.Tj[i]) / (inst->lut.Tj[i + 1] - inst->lut.Tj[i]);
-               break;
+               if((inst->lut.Tj[i] <= Tj) && (Tj <= inst->lut.Tj[i + 1]))
+               {
+                  rdson_k = inst->lut.Rds_factor[i] +
+                     (inst->lut.Rds_factor[i + 1] - inst->lut.Rds_factor[i]) *
+                     (Tj - inst->lut.Tj[i]) / (inst->lut.Tj[i + 1] - inst->lut.Tj[i]);
+                  loop_test = 1;
+                  break;
+               }
             }
-         }
+            if(!loop_test)rdson_k = 1;
          }
          
          // at the t = 0, sometimes simulation start with non-zero
@@ -391,7 +397,7 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
       else
       {
          // for the conduction loss integral where the device VGS is OFF (body diode forward conduction loss)
-         double vsd;
+         double vsd = 0;
 
          if(id_single < -MIN_CURRENT_LIMIT && id_p_single < -MIN_CURRENT_LIMIT)
          {
@@ -401,7 +407,8 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
             }
             else
             {
-               for(int i = 0; i < inst->lut.size_Isd_Vsd; i++)
+               loop_test = 0;
+               for(i = 0; i < inst->lut.size_Isd_Vsd; i++)
                {
                   if((inst->lut.Isd[i] <= - id_single) && (- id_single <= inst->lut.Isd[i + 1]))
                   {
@@ -409,8 +416,10 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
                            (inst->lut.Vsd[i + 1] - inst->lut.Vsd[i]) *
                            (- id_single - inst->lut.Isd[i]) /
                            (inst->lut.Isd[i + 1] - inst->lut.Isd[i]);
+                     loop_test = 1;
                      break;
                   }
+                  if(!loop_test) vsd = inst->lut.Vsd[0];
                }
             }
 
@@ -436,21 +445,25 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
             // Compute turn on capacitive loss energy
             //    if Vds is higher than the highest Vds point in the table,
             //    use the Eoss value at the highest Vds point as approximation
-            double Eoss;
+            double Eoss = 0;
+
             if(inst->vds_p >= inst->lut.Vds[inst->lut.size_Vds_Eoss - 1])
             {
                Eoss = inst->lut.Eoss[inst->lut.size_Vds_Eoss - 1];
             }
             else
             {
-               for(int i = 0; i < inst->lut.size_Vds_Eoss; i++)
+               for(i = 0; i < inst->lut.size_Vds_Eoss; i++)
                {
+                  loop_test = 0;
                   if((inst->lut.Vds[i] <= inst->vds_p) && (inst->vds_p <= inst->lut.Vds[i + 1]))
                   {
                      Eoss = inst->lut.Eoss[i] + (inst->lut.Eoss[i + 1] - inst->lut.Eoss[i]) *
                            (inst->vds_p - inst->lut.Vds[i]) / (inst->lut.Vds[i + 1] - inst->lut.Vds[i]);
+                     loop_test = 1;
                      break;
                   }
+                  if(!loop_test) Eoss = 0;
                }
             }
             inst->Eoss += Eoss * Pcoss_k;
@@ -471,8 +484,20 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
       }
 
       // update Power loss calculation
-      //bool b = ((vgs == 0) && (inst->vgs_p == 1));
-      if((t - inst->t_marker) >= max_prd)
+      bool a = 0;
+      bool b = 0;
+
+      if(max_prd < 0)
+      {
+         a = ((t - inst->t_marker) >= -1 * max_prd);
+         b = ((vgs == 0) & (inst->vgs_p == 1));
+      }
+      else
+      {
+         a = ((t - inst->t_marker) >= max_prd);
+         b = 0;
+      }
+      if(a || b)
       {
          // update all the losses measurement
          inst->period = t - inst->t_marker;
@@ -486,28 +511,43 @@ extern "C" __declspec(dllexport) void loss_meas(struct sLOSS_MEAS **opaque, doub
          inst->pdevice = (inst->pon + inst->poff + inst->pcond + inst->pdt + inst->pcoss);
          inst->ptotal  = Npara * inst->pdevice;
 
-         inst->Eon = 0; inst->Eoff = 0;   inst->Eoss = 0;   inst->rcond_int = 0; inst->vfcond_int = 0;
+         inst->Eon *= 0; inst->Eoff *= 0;   inst->Eoss *= 0;   inst->rcond_int *= 0; inst->vfcond_int *= 0;
 
          inst->t_marker = t;
       }
 
-      double k = 1. / (1. + 2 * M_PI * (t - inst->t_prev) / (10 * max_prd));
+      if(max_prd < 0)
+      {
+         pon      = inst->pon;
+         poff     = inst->poff;
+         pcond    = inst->pcond;
+         pdt      = inst->pdt;
+         pcoss    = inst->pcoss;
+         pdevice  = inst->pdevice;
+         ptotal   = inst->ptotal;
+      }
+      else
+      {
+         double k = 0;
+         k = 1. / (1. + 2 * M_PI * (t - inst->t_prev) / (10 * max_prd));
 
-      pon      = pon     * k + inst->pon1     * (1 - k);
-      poff     = poff    * k + inst->poff1    * (1 - k);
-      pcond    = pcond   * k + inst->pcond1   * (1 - k);
-      pdt      = pdt     * k + inst->pdt1     * (1 - k);
-      pcoss    = pcoss   * k + inst->pcoss1   * (1 - k);
-      pdevice  = pdevice * k + inst->pdevice1 * (1 - k);
-      ptotal   = ptotal  * k + inst->ptotal1  * (1 - k);
+         pon      = pon     * k + inst->pon1     * (1 - k);
+         poff     = poff    * k + inst->poff1    * (1 - k);
+         pcond    = pcond   * k + inst->pcond1   * (1 - k);
+         pdt      = pdt     * k + inst->pdt1     * (1 - k);
+         pcoss    = pcoss   * k + inst->pcoss1   * (1 - k);
+         pdevice  = pdevice * k + inst->pdevice1 * (1 - k);
+         ptotal   = ptotal  * k + inst->ptotal1  * (1 - k);
 
-      inst->pon1      = inst->pon1     * k + inst->pon     * (1 - k);
-      inst->poff1     = inst->poff1    * k + inst->poff    * (1 - k);
-      inst->pcond1    = inst->pcond1   * k + inst->pcond   * (1 - k);
-      inst->pdt1      = inst->pdt1     * k + inst->pdt     * (1 - k);
-      inst->pcoss1    = inst->pcoss1   * k + inst->pcoss   * (1 - k);
-      inst->pdevice1  = inst->pdevice1 * k + inst->pdevice * (1 - k);
-      inst->ptotal1   = inst->ptotal1  * k + inst->ptotal  * (1 - k);
+         inst->pon1      = inst->pon1     * k + inst->pon     * (1 - k);
+         inst->poff1     = inst->poff1    * k + inst->poff    * (1 - k);
+         inst->pcond1    = inst->pcond1   * k + inst->pcond   * (1 - k);
+         inst->pdt1      = inst->pdt1     * k + inst->pdt     * (1 - k);
+         inst->pcoss1    = inst->pcoss1   * k + inst->pcoss   * (1 - k);
+         inst->pdevice1  = inst->pdevice1 * k + inst->pdevice * (1 - k);
+         inst->ptotal1   = inst->ptotal1  * k + inst->ptotal  * (1 - k);
+      }
+
 
       inst->vgs_p = vgs;
       inst->vds_p = vds;
