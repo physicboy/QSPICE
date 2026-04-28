@@ -1,0 +1,29 @@
+ÿØÿÛ«symbol Current_TX - Copy
+  «type: X»
+  «library file: |.subckt Current_TX + - o+ o-\nV1 + - 0\nF1 0 N01 V1 1\nL1 N01 0 Lw/Turns^2 rser=1m rpar=1Meg ic=0\nL2 o+ o- Lw rser=Rw rpar=1Meg ic=0\nK L1 L2 K\n.ends Current_TX»
+  «shorted pins: false»
+  «line (0,0) (400,0) 5 0 0x1000000 -1 -1»
+  «line (80,-150) (120,-150) 0 0 0x1000000 -1 -1»
+  «line (280,-150) (320,-150) 0 0 0x1000000 -1 -1»
+  «line (100,-170) (100,-130) 0 0 0x1000000 -1 -1»
+  «ellipse (150,50) (250,-50) 0 0 0 0x1000000 0x1000000 -1 -1»
+  «ellipse (130,70) (270,-70) 0 0 0 0x1000000 0x1000000 -1 -1»
+  «arc3p (100,-200) (160,-60) (-90,-140) 3 0 0x1000000 -1 -1»
+  «arc3p (240,-60) (300,-200) (490,-140) 3 0 0x1000000 -1 -1»
+  «triangle (180,-20) (180,20) (230,0) 0 0 0x1000000 0x3000000 -1 -1»
+  «coil (160,-40) (240,-80) 0 3 0 0x1000000 -1 -1»
+  «text (200,50) 1 14 0 0x1000000 -1 -1 "CT1"»
+  «text (900,0) 1 0 2 0x1000000 -1 -1 "Current_TX"»
+  «text (450,-100) 0.5 7 0 0x1000000 -1 -1 "K=<1>"»
+  «text (450,-200) 0.5 7 0 0x1000000 -1 -1 "Turns=<500>"»
+  «text (450,-300) 0.5 7 0 0x1000000 -1 -1 "Lw=<1m>"»
+  «text (450,-400) 0.5 7 0 0x1000000 -1 -1 "Rw=<5>"»
+  «text (50,-500) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
+  «text (50,-650) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
+  «text (50,-800) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
+  «text (50,-950) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
+  «pin (0,0) (0,0) 1 15 0 0x0 -1 "+"»
+  «pin (400,0) (20,0) 1 15 0 0x0 -1 "-"»
+  «pin (100,-200) (0,0) 1 15 0 0x0 -1 "o+"»
+  «pin (300,-200) (-20,0) 1 15 0 0x0 -1 "o-"»
+»
