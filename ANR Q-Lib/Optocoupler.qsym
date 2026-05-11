@@ -1,0 +1,42 @@
+ÿØÿÛ«symbol Optocoupler
+  «type: X»
+  «library file: |.subckt Optocoupler C E A K\nC3 C E Cpole rser=10m rpar=1G ic=0\n.subckt BD1•Diode K A\nB4 A K I=if(v(A,K)>vfwdlim,(v(A,K)-vfwdlim)/rfwd,v(A,K)/roff)\n.param rfwd=1m roff=1E9 vfwd=1\n.param vfwdlim=vfwd*(roff/rfwd)/(roff/rfwd - 1)\n.ends Diode\nX´BD1 N01 A BD1•Diode vfwd=Vdiode rfwd=Rdiode roff=1G\nV1 N01 K 0\nB1 E C I=-G*i(V1)\nD1 E C DD\n.model DD D ron=1m roff=1E7 vfwd=1m\n.ends Optocoupler»
+  «shorted pins: false»
+  «line (800,-330) (1000,-330) 0 0 0x1000000 -1 -1»
+  «line (900,-500) (900,-330) 0 0 0x1000000 -1 -1»
+  «line (900,0) (900,-180) 0 0 0x1000000 -1 -1»
+  «line (1100,0) (900,0) 0 0 0x1000000 -1 -1»
+  «line (1100,-500) (900,-500) 0 0 0x1000000 -1 -1»
+  «line (200,-120) (200,0) 0 0 0x1000000 -1 -1»
+  «line (200,-380) (200,-500) 0 0 0x1000000 -1 -1»
+  «line (200,-120) (300,-220) 0 0 0x1000000 -1 -1»
+  «line (300,-280) (200,-380) 0 0 0x1000000 -1 -1»
+  «line (300,-150) (300,-350) 0 0 0x1000000 -1 -1»
+  «line (0,0) (200,0) 0 0 0x1000000 -1 -1»
+  «line (0,-500) (200,-500) 0 0 0x1000000 -1 -1»
+  «line (600,-200) (400,-250) 0 0 0x1000000 -1 -1»
+  «line (550,-150) (600,-200) 0 0 0x1000000 -1 -1»
+  «line (750,-100) (550,-150) 0 0 0x1000000 -1 -1»
+  «line (600,-300) (400,-350) 0 0 0x1000000 -1 -1»
+  «line (550,-250) (600,-300) 0 0 0x1000000 -1 -1»
+  «line (750,-200) (550,-250) 0 0 0x1000000 -1 -1»
+  «rect (0,-600) (1100,100) 0 0 0 0xff0000 0x1000000 -1 0 -1»
+  «triangle (900,-330) (800,-180) (1000,-180) 0 0 0x1000000 0x1000000 -1 -1»
+  «triangle (200,-380) (235,-325) (255,-345) 0 0 0x1000000 0x3000000 -1 -1»
+  «triangle (400,-250) (455,-215) (465,-245) 0 0 0x1000000 0x3000000 -1 -1»
+  «triangle (400,-350) (455,-315) (465,-345) 0 0 0x1000000 0x3000000 -1 -1»
+  «text (350,200) 1 7 0 0x1000000 -1 -1 "OPTO1"»
+  «text (150,-900) 0.5 7 2 0x1000000 -1 -1 "Optocoupler"»
+  «text (100,-1050) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
+  «text (100,-1200) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
+  «text (100,-1350) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
+  «text (100,-1500) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
+  «text (1,-800) 0.5 7 0 0x1000000 -1 -1 "Cpole=<9n>"»
+  «text (2,-700) 0.5 7 0 0x0 -1 -1 "G=<5>"»
+  «text (551,-700) 0.5 7 0 0x1000000 -1 -1 "Vdiode=<9n>"»
+  «text (551,-800) 0.5 7 0 0x1000000 -1 -1 "Rdiode=<9n>"»
+  «pin (0,0) (0,0) 1 15 0 0x0 -1 "C"»
+  «pin (0,-500) (0,-5) 1 15 0 0x0 -1 "E"»
+  «pin (1100,0) (0,0) 1 15 0 0x0 -1 "A"»
+  «pin (1100,-500) (-20,0) 1 15 0 0x0 -1 "K"»
+»
