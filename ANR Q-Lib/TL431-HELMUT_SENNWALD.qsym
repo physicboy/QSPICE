@@ -1,0 +1,22 @@
+ÿØÿÛ«symbol TL431-HELMUT_SENNWALD
+  «type: X»
+  «library file: |.SUBCKT TL431A K A R\nQ1 3 2 1 0 NPN1 2.70\nQ2 2 2 A 0 NPN1 1\nR1 1 A 800 TC1=0.00035\nR2 4 2 2.4k\nR3 4 3 7.2k\nR4 5 4 3.28k\nQ3 6 3 A 0 NPN1 1\nR5 7 6 4k\nQ4 10 5 7 0 NPN1 1\nQ5 K R 5 0 NPN1 1\nR6 2 12 1k\nQ6 11 12 A 0 NPN1 0.2\nQ9 K 11 13 0 NPN1 2\nQ10 K 14 A 0 NPN1 10\nR10 14 A 10k\nR9 13 14 150\nR7 K 8 800\nQ7 10 10 8 0 PNP1 1\nQ8 11 10 9 0 PNP1 1\nD2 A K D1\nD1 A 11 D3\nR8 K 9 800\nC1 K 11 20p\nC2 6 3 20p\nD3 11 R D2\n.MODEL NPN1 NPN(Is=0.8e-14 BF=100 VAF=100 TF=0.5e-9 RB=50 IKF=10m KF=1e-16 AF=1 RE=10)\n.MODEL PNP1 PNP(Is=1e-14 BF=50 VAF=50 TF=1e-8 IKF=2m KF=1e-16 AF=1)\n.MODEL D1 D(Is=1e-13 Rs=10 CJ0=20p)\n.MODEL D2 D(Is=1e-13 Rs=10 CJ0=2p BV=5 IBV=10u)\n.MODEL D3 D(Is=1e-13 Rs=10 CJ0=2p )\n.ends»
+  «shorted pins: false»
+  «line (100,-120) (-100,-120) 0 0 0x1000000 -1 -1»
+  «line (0,0) (0,-120) 0 0 0x1000000 -1 -1»
+  «line (0,-400) (0,-270) 0 0 0x1000000 -1 -1»
+  «line (200,-200) (50,-200) 0 0 0x1000000 -1 -1»
+  «triangle (0,-120) (100,-270) (-100,-270) 0 0 0x1000000 0x2000000 -1 -1»
+  «text (150,0) 1 7 0 0x1000000 -1 -1 "TL431-1"»
+  «text (150,-450) 0.5 7 2 0x1000000 -1 -1 "TL431A"»
+  «text (100,-600) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
+  «text (100,-750) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
+  «text (100,-900) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
+  «text (100,-1050) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
+  «text (100,-1300) 0.735 7 3 0x1000000 -1 -1 "source for the spice model: https://www.onsemi.com/pub/collateral/tl431%20spice%20models.doc"»
+  «text (14,1150) 1 7 3 0x1000000 -1 -1 "* Model developed by Helmut Sennewald  6/27/2004\r\n* This TL431 model has been developed from the schematic in the datasheet.\r\n* It agrees with most of the test circuits and covers\r\n* Tempco, C-load stability, AC gain, reverse diode, noise, transient, Zout\r\n* Version 1.1\r\n*  Modified by Eugene Dvoskin for compliance with my TL431 symbol\r\n*         \r\n*                              CATHODE\r\n*                              |  ANODE \r\n*                              |   |  REFERENCE\r\n*                              |   |   |"»
+  «text (59,2350) 1 7 3 0x1000000 -1 -1 "https://www.eevblog.com/forum/projects/this-ltspice-model-for-tl431-is-bonkers/25/"»
+  «pin (0,0) (20,0) 1 15 0 0x0 -1 "K"»
+  «pin (0,-400) (-20,0) 1 15 0 0x0 -1 "A"»
+  «pin (200,-200) (0,0) 1 15 0 0x0 -1 "R"»
+»

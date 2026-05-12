@@ -1,6 +1,6 @@
-ÿØÿÛ«symbol TL431-ONSEMI
+ÿØÿÛ«symbol TL431-MACRO-ONSEMI
   «type: X»
-  «library file: |.SUBCKT TL431 7 6 11\n.MODEL DCLAMP D (IS=13.5N RS=25M N=1.59 CJO=45P VJ=.75 M=.302 TT=50.4N BV=34V IBV=1MA)\nEB1 1 6 Value = { IF ( V(7,6)> 2.495, 2.495, V(7,6) ) }\nR1 6 2 15.6\nC1 2 6 .5U\nR2 2 3 100\nC2 3 4 .08U\nR3 4 6 10\nG2 6 8 3 6 1.73\nD1 5 8 DCLAMP\nD2 7 8 DCLAMP\nV4 5 6 2\nG1 6 2 1 11 0.11\n.ENDS»
+  «library file: |.SUBCKT TL431 7 6 11\n.MODEL DCLAMP D (IS=13.5N RS=25M N=1.59 CJO=45P VJ=.75 M=.302 TT=50.4N BV=34V IBV=1MA)\nEB1 1 6 Value = { IF ( V(7,6)> 2.495, 2.495, V(7,6) ) }\nR1 6 2 15.6\nC1 2 6 .5U ic=0\nR2 2 3 100\nC2 3 4 .08U ic=0\nR3 4 6 10\nG2 6 8 3 6 1.73\nD1 5 8 DCLAMP\nD2 7 8 DCLAMP\nV4 5 6 2\nG1 6 2 1 11 0.11\n.ENDS»
   «shorted pins: false»
   «line (100,-120) (-100,-120) 0 0 0x1000000 -1 -1»
   «line (0,0) (0,-120) 0 0 0x1000000 -1 -1»
@@ -13,7 +13,7 @@
   «text (100,-750) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
   «text (100,-900) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
   «text (100,-1050) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
-  «text (100,-1300) 0.735 7 3 0x1000000 -1 -1 "source for the spice model: https://www.onsemi.com/pub/collateral/tl431%20spice%20models.doc"»
+  «text (100,250) 0.735 7 3 0x1000000 -1 -1 "source for the spice model: https://www.onsemi.com/pub/collateral/tl431%20spice%20models.doc"»
   «pin (0,0) (20,0) 1 15 0 0x0 -1 "7"»
   «pin (0,-400) (-20,0) 1 15 0 0x0 -1 "6"»
   «pin (200,-200) (0,0) 1 15 0 0x0 -1 "11"»

@@ -1,0 +1,21 @@
+ÿØÿÛ«symbol TL431-EUGENE_DUBOVSKI
+  «type: X»
+  «library file: |.SUBCKT TL431ED CATHODE ANODE REF\nQ1 CATHODE REF N005 QN_ED\nR4 N005 N009 3.28k\nR2 N009 N012 2.4k\nR3 N009 N010 7.2k\nQ2 N012 N012 ANODE QN_ED area=1.2\nQ3 N010 N012 N014 QN_ED area=2.2\nR1 N014 ANODE 800\nQ4 N003 N005 N006 QN_ED\nR5 N006 N011 4k\nQ5 N011 N010 ANODE QN_ED\nQ6 N004 N013 ANODE QN_ED area=0.5\nQ7 N003 N003 N001 QP_ED\nQ8 N004 N003 N002 QP_ED\nR7 CATHODE N001 800\nR8 CATHODE N002 800\nQ9 CATHODE N004 N007 QN_ED\nR9 N008 N007 150\nQ10 CATHODE N008 ANODE QN_ED area=5\nR10 N008 ANODE 10k\nQ11 N004 N004 REF QN_ED\nD1 ANODE N004 D_ED\nR6 N013 N012 1k\nD2 ANODE CATHODE D_ED\nC1 CATHODE N004 10p\nC2 N010 N011 20p\n.model QN_ED NPN(BF=140 Cje=1p Cjc=2p Rb=40 VAF=80 VAR=50 KF=3.2e-16 AF=1)\n.model QP_ED PNP(BF=60 Cje=1p Cjc=3p Rb=80 VAF=70 VAR=40)\n.MODEL D_ED D(Rs=5 CJ0=4.0p)\n.ends TL431ED»
+  «shorted pins: false»
+  «line (100,-120) (-100,-120) 0 0 0x1000000 -1 -1»
+  «line (0,0) (0,-120) 0 0 0x1000000 -1 -1»
+  «line (0,-400) (0,-270) 0 0 0x1000000 -1 -1»
+  «line (200,-200) (50,-200) 0 0 0x1000000 -1 -1»
+  «triangle (0,-120) (100,-270) (-100,-270) 0 0 0x1000000 0x2000000 -1 -1»
+  «text (150,0) 1 7 0 0x1000000 -1 -1 "TL431-1"»
+  «text (150,-450) 0.5 7 2 0x1000000 -1 -1 "TL431ED"»
+  «text (100,-600) 0.735 7 3 0x1000000 -1 -1 "Author: Arief Noor Rahman - Power Control Design"»
+  «text (100,-750) 0.735 7 3 0x1000000 -1 -1 "https://github.com/physicboy/QSPICE/"»
+  «text (100,-900) 0.735 7 3 0x1000000 -1 -1 "https://www.linkedin.com/in/arief-noor-rahman-3880a536/"»
+  «text (100,-1050) 0.735 7 3 0x1000000 -1 -1 "https://forum.qorvo.com/u/physicboy/"»
+  «text (50,600) 0.735 7 3 0x1000000 -1 -1 "**********************************************************************************\r\n* Model developed by Eugene Dvoskin  "http://www.audio-perfection.com"  02/05/2012\r\n* This TL431 model has been developed from schematic in the datasheet\r\n* http://www.ti.com/lit/ds/symlink/tl431.pdf\r\n* It matches most of DC, AC, Transient, Stability and Noise performance of TI TL431\r\n* No attempts were made to cover Temperature dependences\r\n*********************************************************************************"»
+  «text (3100,1250) 1 0 3 0x1000000 -1 -1 "https://www.eevblog.com/forum/projects/this-ltspice-model-for-tl431-is-bonkers/25/"»
+  «pin (0,0) (20,0) 1 15 0 0x0 -1 "CATHODE"»
+  «pin (0,-400) (-20,0) 1 15 0 0x0 -1 "ANODE"»
+  «pin (200,-200) (0,0) 1 15 0 0x0 -1 "REF"»
+»
