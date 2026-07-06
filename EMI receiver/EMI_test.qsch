@@ -85,6 +85,9 @@
   «wire (-1600,-1900) (-1600,-1800) "N01"»
   «wire (-1600,-1400) (-1600,-1300) "N02"»
   «wire (-1600,-3200) (-1600,-3000) "GND"»
-  «text (-700,-250) 1 7 0 0x1000000 -1 -1 "ï»¿.tran 10m"»
+  «text (-1550,-400) 1 7 0 0x1000000 -1 -1 "ï»¿.tran 10m"»
+  «text (-1100,-2800) 0.65 7 1 0x1000000 -1 -1 "ï»¿150kHz ~30MHz with 9kHz -6dB RBW filter EMI receiver designed to follow CISPR 16 standard"»
+  «text (-1100,-2950) 0.65 7 1 0x1000000 -1 -1 "ï»¿120MSPS data resampling with 65356 window size and FFT flat-top window is used"»
+  «text (-1100,-3100) 0.65 7 1 0x1000000 -1 -1 "ï»¿average and peak detector is implemented"»
 »
 
