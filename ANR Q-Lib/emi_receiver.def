@@ -1,0 +1,6 @@
+LIBRARY "..\..\emi_receiver.dll"
+DESCRIPTION '..\..\emi_receiver as a DLL'
+EXETYPE NT
+SUBSYSTEM WINDOWS
+CODE SHARED EXECUTE
+DATA WRITE

@@ -489,7 +489,6 @@ extern "C" __declspec(dllexport) void Destroy(struct sFRA_V7 *inst)
       char *a = "\"c:\\Program Files\\QSPICE\\QUX\" ";
       strcat(a, inst->fra.fname);
       if(inst->plot) system(a);
-      a = "";
    }
    free(inst);
 }
