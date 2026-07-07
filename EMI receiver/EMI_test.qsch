@@ -28,7 +28,7 @@
       «pin (0,-200) (0,0) 1 0 0 0x0 -1 "-"»
     »
   »
-  «component (-1600,-1600) 0 0
+  «component (-1600,-1600) 0 2
     «symbol V
       «type: V»
       «description: Independent Voltage Source»
@@ -80,16 +80,16 @@
     »
   »
   «net (-1600,-3200) 1 13 0 "GND"»
-  «junction (-1600,-1400)»
+  «junction (400,-600)»
   «wire (-1600,-2600) (-1600,-2300) "N01"»
   «wire (-1600,-900) (-1600,-600) "N02"»
-  «wire (-1600,-600) (600,-600) "N02"»
+  «wire (400,-600) (600,-600) "N02"»
   «wire (-1600,-1900) (-1600,-1800) "N01"»
-  «wire (-1600,-1400) (-1600,-1300) "N03"»
+  «wire (-1600,-1400) (-1600,-1300) "N01"»
   «wire (-1600,-3200) (-1600,-3000) "GND"»
-  «wire (400,-800) (600,-800) "N03"»
-  «wire (-1600,-1400) (400,-1400) "N03"»
-  «wire (400,-1400) (400,-800) "N03"»
+  «wire (400,-800) (600,-800) "N02"»
+  «wire (400,-600) (400,-800) "N02"»
+  «wire (-1600,-600) (400,-600) "N02"»
   «text (-1550,-400) 1 7 0 0x1000000 -1 -1 "ï»¿.tran 10m"»
   «text (-1750,-3400) 0.65 7 1 0x1000000 -1 -1 "ï»¿150kHz ~30MHz with 9kHz -6dB RBW filter EMI receiver designed to follow CISPR 16 standard"»
   «text (-1750,-3550) 0.65 7 1 0x1000000 -1 -1 "ï»¿120MSPS data resampling with 65356 window size and FFT flat-top window is used"»

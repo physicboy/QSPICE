@@ -1,12 +1,15 @@
 ÿØÿÛ«symbol Analyzer - EMIreceiver
   «type: X»
-  «description: Machine generated symbol for EMIRECEIVER»
   «library file: |.subckt EMI_receiver in1 in2\nØ´X1 «in1´d in2´d» «» «» emi_receiver double tstart=tstart\n.ends EMI_receiver»
   «shorted pins: false»
-  «rect (0,-400) (1400,0) 0 0 0 0xff0000 0x4000000 -1 0 -1»
+  «rect (0,-800) (1400,0) 0 0 0 0xff0000 0x4000000 -1 0 -1»
   «text (50,100) 1 7 0 0x1000000 -1 -1 "EMI1"»
-  «text (300,-100) 1 7 0 0x1000000 -1 -1 "EMI_RECEIVER"»
-  «text (300,-300) 1 7 0 0x1000000 -1 -1 "tstart=1m"»
+  «text (450,100) 1 7 2 0x1000000 -1 -1 "EMI_RECEIVER"»
+  «text (500,-200) 1 7 0 0x1000000 -1 -1 "tstart=1m"»
+  «text (50,-550) 0.5 7 1 0x1000000 -1 -1 "150kHz ~ 30MHz, -6dB RBW = 9kHz"»
+  «text (50,-450) 0.5 7 1 0x1000000 -1 -1 "CISPR16-1-1 "»
+  «text (50,-650) 0.5 7 1 0x1000000 -1 -1 "65536 bin FFT w/ Flat-top window"»
+  «text (50,-750) 0.5 7 1 0x1000000 -1 -1 "RBW IF weighted window filter"»
   «pin (0,-100) (30,0) 1 7 0 0x0 -1 "in1"»
   «pin (0,-300) (30,0) 1 7 0 0x0 -1 "in2"»
 »

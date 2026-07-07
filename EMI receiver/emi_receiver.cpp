@@ -294,6 +294,7 @@ void generate_RBW_window(double *rbw_window)
    for(int n = 1; n <= RBW_LENGTH; n++)
    {
       double k = n * ((double)FSAMPLING / (double)FFT_N) / 6993.64; // for RBW -6dB at 9kHz
+      //double k = n * ((double)FSAMPLING / (double)FFT_N) / 2745.85; // for RBW -6dB at 9kHz
       k = 1. / (1. + k * k);
       rbw_window[n] = k * k;
 
@@ -344,6 +345,7 @@ void compute_spectrum(struct sComplex *data, double *window_sum, double *mag, do
 
       // Final gain compensation to map 1V input signal to exactly -3dB.
       rbw[iii][1] *= 1.164056256;
+      // rbw[iii][1] *= 0.793153011151;
 
       iii++;
    }
