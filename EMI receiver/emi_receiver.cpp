@@ -106,21 +106,26 @@ struct sEMI_RECEIVER
 {
   // declare the structure here
    double tprev;
-   double xprev;
+
    double tsampling;
    int counter;
    int set;
 
+   double x1prev;
+   double x2prev;
+
    double window[FFT_N];
    double window_sum;
-
-   struct sComplex dd[FFT_N];
-
-   double mag[FFT_N / 2];
-
    double rbw_window[RBW_LENGTH + 1];
 
-   double rbw[FFT_N / 2][4];
+   struct sComplex dd1[FFT_N];
+   double mag1[FFT_N / 2];
+   double rbw1[FFT_N / 2][4];
+
+   struct sComplex dd2[FFT_N];
+   double mag2[FFT_N / 2];
+   double rbw2[FFT_N / 2][4];
+
    // mag_RBW col 0 : Freq in Hz
    // mag_RBW col 1 : Raw RBW output
    // mag_RBW col 2 : RBW average output by accumulator then divide by sample
@@ -132,8 +137,9 @@ void generate_RBW_window(double *rbw_window);
 void compute_spectrum(struct sComplex *data, double *window_sum, double *mag, double rbw[][4], double *rbw_window);
 extern "C" __declspec(dllexport) void emi_receiver(struct sEMI_RECEIVER **opaque, double t, union uData *data)
 {
-   double in     = data[0].d; // input
-   double tstart = data[1].d; // input parameter
+   double in1    = data[0].d; // input
+   double in2    = data[1].d; // input
+   double tstart = data[2].d; // input parameter
 
    if(!*opaque)
    {
@@ -151,11 +157,16 @@ extern "C" __declspec(dllexport) void emi_receiver(struct sEMI_RECEIVER **opaque
 // Implement module evaluation code here:
    if(inst->tprev <= inst->tsampling && inst->tsampling < t)
    {
-      double xslope = (in * 1E6 - inst->xprev) / (t - inst->tprev);
+      double xslope1 = (in1 * 1E6 - inst->x1prev) / (t - inst->tprev);
+      double xslope2 = (in2 * 1E6 - inst->x2prev) / (t - inst->tprev);
       while(1)
       {
-         inst->dd[inst->counter].re = inst->xprev + xslope *(inst->tsampling - inst->tprev);
-         inst->dd[inst->counter].re *= inst->window[inst->counter];
+         inst->dd1[inst->counter].re = inst->x1prev + xslope1 *(inst->tsampling - inst->tprev);
+         inst->dd1[inst->counter].re *= inst->window[inst->counter];
+
+         inst->dd2[inst->counter].re = inst->x2prev + xslope2 *(inst->tsampling - inst->tprev);
+         inst->dd2[inst->counter].re *= inst->window[inst->counter];
+
          inst->counter++;
          inst->tsampling += 1. / FSAMPLING;
 
@@ -163,12 +174,20 @@ extern "C" __declspec(dllexport) void emi_receiver(struct sEMI_RECEIVER **opaque
          {
             inst->counter = 0;
             inst->set++;
-            compute_spectrum(inst->dd, &inst->window_sum, inst->mag, inst->rbw, inst->rbw_window);
+
+            compute_spectrum(inst->dd1, &inst->window_sum, inst->mag1, inst->rbw1, inst->rbw_window);
+            compute_spectrum(inst->dd2, &inst->window_sum, inst->mag2, inst->rbw2, inst->rbw_window);
+
+            // average detector accumulator
             int i = 0;
-            while(inst->rbw[i][0] != 0)
+            while(inst->rbw1[i][0] != 0)
             {
-               inst->rbw[i][2] += inst->rbw[i][1];
-               if(inst->rbw[i][3] < inst->rbw[i][1])inst->rbw[i][3] = inst->rbw[i][1];
+               inst->rbw1[i][2] += inst->rbw1[i][1];
+               if(inst->rbw1[i][3] < inst->rbw1[i][1])inst->rbw1[i][3] = inst->rbw1[i][1];
+
+               inst->rbw2[i][2] += inst->rbw2[i][1];
+               if(inst->rbw2[i][3] < inst->rbw2[i][1])inst->rbw2[i][3] = inst->rbw2[i][1];
+
                i++;
             }
          }
@@ -180,7 +199,8 @@ extern "C" __declspec(dllexport) void emi_receiver(struct sEMI_RECEIVER **opaque
       }
    }
 
-   inst->xprev = in * 1E6;
+   inst->x1prev = in1 * 1E6;
+   inst->x2prev = in2 * 1E6;
    inst->tprev = t;
 }
 
@@ -191,18 +211,20 @@ extern "C" __declspec(dllexport) void Destroy(struct sEMI_RECEIVER *inst)
    fprintf(fp, "Freq,");
    fprintf(fp, "CISPR32A_AVG,CISPR32A_QP,");
    fprintf(fp, "CISPR32B_AVG,CISPR32B_QP,");
-   fprintf(fp, "MAG_RAW,MAG_AVG,MAG_PEAK\n");
+   fprintf(fp, "MAG1_RAW,MAG1_AVG,MAG1_PEAK,");
+   fprintf(fp, "MAG2_RAW,MAG2_AVG,MAG2_PEAK\n");
    int i = 0;
-   while(inst->rbw[i][0] != 0.0)
+   while(inst->rbw1[i][0] != 0.0)
    {
+      // compute the reference limit for CISPR32A/B AVG and Quasi-Peak
       double cispr32b;
-      if(inst->rbw[i][0] <= 500E3)
+      if(inst->rbw1[i][0] <= 500E3)
       {
-         cispr32b = 630.957 * pow(150000/inst->rbw[i][0], 0.95625);
+         cispr32b = 630.957 * pow(150000/inst->rbw1[i][0], 0.95625);
       }
       else
       {
-         if(inst->rbw[i][0] <= 5E6)
+         if(inst->rbw1[i][0] <= 5E6)
          {
             cispr32b = 199.5;
          }
@@ -213,10 +235,11 @@ extern "C" __declspec(dllexport) void Destroy(struct sEMI_RECEIVER *inst)
       }
 
 
-      fprintf(fp, "%f,", inst->rbw[i][0]);
-      fprintf(fp, "%.10f,0,%.10f,0,", inst->rbw[i][0]<500E3?8913.:4466.8, inst->rbw[i][0]<500E3?2000.:1000.);
+      fprintf(fp, "%f,", inst->rbw1[i][0]);
+      fprintf(fp, "%.10f,0,%.10f,0,", inst->rbw1[i][0]<500E3?8913.:4466.8, inst->rbw1[i][0]<500E3?2000.:1000.);
       fprintf(fp, "%.10f,0,%.10f,0,", cispr32b, cispr32b*3.16);
-      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0\n", inst->rbw[i][1], inst->rbw[i][2]/inst->set, inst->rbw[i][3]);
+      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0,", inst->rbw1[i][1], inst->rbw1[i][2]/inst->set, inst->rbw1[i][3]);
+      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0\n", inst->rbw2[i][1], inst->rbw2[i][2]/inst->set, inst->rbw2[i][3]);
       i++;
    }
 
