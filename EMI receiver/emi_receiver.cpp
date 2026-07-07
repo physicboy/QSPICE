@@ -188,11 +188,35 @@ extern "C" __declspec(dllexport) void Destroy(struct sEMI_RECEIVER *inst)
 {
    FILE *fp = fopen("EMI_report.csv", "w");
 
-   fprintf(fp, "Freq,Raw_RBW,AVG_RBW,Peak_RBW\n");
+   fprintf(fp, "Freq,");
+   fprintf(fp, "CISPR32A_AVG,CISPR32A_QP,");
+   fprintf(fp, "CISPR32B_AVG,CISPR32B_QP,");
+   fprintf(fp, "MAG_RAW,MAG_AVG,MAG_PEAK\n");
    int i = 0;
    while(inst->rbw[i][0] != 0.0)
    {
-      fprintf(fp, "%f,%.10f,0,%.10f,0,%.10f,0\n", inst->rbw[i][0], inst->rbw[i][1], inst->rbw[i][2]/inst->set, inst->rbw[i][3]);
+      double cispr32b;
+      if(inst->rbw[i][0] <= 500E3)
+      {
+         cispr32b = 630.957 * pow(150000/inst->rbw[i][0], 0.95625);
+      }
+      else
+      {
+         if(inst->rbw[i][0] <= 5E6)
+         {
+            cispr32b = 199.5;
+         }
+         else
+         {
+            cispr32b = 316.2;
+         }
+      }
+
+
+      fprintf(fp, "%f,", inst->rbw[i][0]);
+      fprintf(fp, "%.10f,0,%.10f,0,", inst->rbw[i][0]<500E3?8913.:4466.8, inst->rbw[i][0]<500E3?2000.:1000.);
+      fprintf(fp, "%.10f,0,%.10f,0,", cispr32b, cispr32b*3.16);
+      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0\n", inst->rbw[i][1], inst->rbw[i][2]/inst->set, inst->rbw[i][3]);
       i++;
    }
 
