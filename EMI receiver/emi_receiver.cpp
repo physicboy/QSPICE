@@ -8,7 +8,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,10 +36,6 @@
 // 5. Spectrum magnitude calculation
 // 6. RBW IF filter realization in frequency domain
 // 7. average and peak detection
-//
-// Just be aware, there is no buffer under/overflow guard.
-// In the test and with the code as is, buffer under/overflow is not likely.
-// since the the array index to be accessed has been identified with some lazy extra array accessible.
 
 #include <malloc.h>
 #include <stdio.h>
@@ -47,11 +43,37 @@
 #include <math.h>
 #include <string.h>
 
+// Frequency bin resolution 1kHz, sample length 2^17 to aim for max BW of ~6MHz
+#define FFT_N        131072
+#define FSAMPLING    131072000
+#define FMAX         30000000
+#define FMIN         150000
+
+// RBW_LENGTH = 50 bins corresponds to Fcenter +/- 50kHz
+#define RBW_LENGTH   50
+
+// Required tuning parameters to aim -6dB at +/- 4.5kHz
+// Smaller RBW_BI_LORENTZIAN_CONSTANT yields steeper drop
+// do this tuning first!
+#define RBW_BI_LORENTZIAN_CONSTANT  5900.
+
+// Required tuning parameters to aim 2Vpp single tone input signal to yield 117dBuV
+// do this tuning for the second!
+#define RBW_GAIN_CORRECTION         1.595
+
+// maximum buffer length 0.1sec / update_rate
+// update_rate = (FFT_N / FSAMPLING) * (1 - %OVERLAP) = 62.5us
+#define QP_BUFFER_LENGTH            1600
+
+// QP_LPF_CONSTANT = tau / (tau + Ts)
+#define QP_LPF_RISE                 0.94117647058  /*tau = 1ms,   Ts = update_rate*/
+#define QP_LPF_FALL                 0.99960952752  /*tau = 160ms, Ts = update_rate*/
+
 extern "C" __declspec(dllexport) void (*Display)(const char *format, ...)       = 0; // works like printf()
 extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)          = 0; // print message like printf() but exit(0) afterward
 extern "C" __declspec(dllexport) const double *DegreesC                         = 0; // pointer to current circuit temperature
 extern "C" __declspec(dllexport) const int *StepNumber                          = 0; // pointer to current step number
-extern "C" __declspec(dllexport) const int *NumberSteps                         = 0; // pointer to estimated number of steps
+extern "C" __declspec(dllexport) const int *NumberSteps                          = 0; // pointer to estimated number of steps
 extern "C" __declspec(dllexport) const char* const *InstanceName                = 0; // pointer to address of instance name
 extern "C" __declspec(dllexport) const char *QUX                                = 0; // path to QUX.exe
 extern "C" __declspec(dllexport) const bool *ForKeeps                           = 0; // pointer to whether being evaluated non-hypothetically
@@ -62,8 +84,8 @@ extern "C" __declspec(dllexport) const double *CKTdelta                         
 extern "C" __declspec(dllexport) const int *IntegrationOrder                    = 0;
 extern "C" __declspec(dllexport) const char *InstallDirectory                   = 0;
 extern "C" __declspec(dllexport) double (*EngAtof)(const char **string)         = 0;
-extern "C" __declspec(dllexport) const char *(*BinaryFormat)(unsigned int data)                          = 0; // BinaryFormat(0x1C) returns "0b00011100"
-extern "C" __declspec(dllexport) const char *(*EngFormat   )(double x, const char *units, int numDgts)   = 0; // EngFormat(1e-6, "s", 6) returns "1µs"
+extern "C" __declspec(dllexport) const char *(*BinaryFormat)(unsigned int data)          = 0; // BinaryFormat(0x1C) returns "0b00011100"
+extern "C" __declspec(dllexport) const char *(*EngFormat   )(double x, const char *units, int numDgts)   = 0; // EngFormat(1e-6, "s", 6) returns "1ï¿½s"
 extern "C" __declspec(dllexport) int (*DFFT)(struct sComplex *u, bool inv, unsigned int N, double scale) = 0; // Discrete Fast Fourier Transform
 extern "C" __declspec(dllexport) void (*bzero)(void *ptr, unsigned int count)   = 0;
 
@@ -84,183 +106,221 @@ union uData
    unsigned char *bytes;
 };
 
-// int DllMain() must exist and return 1 for a process to load the .DLL
-// See https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain for more information.
 int __stdcall DllMain(void *module, unsigned int reason, void *reserved) { return 1; }
 
-// #undef pin names lest they collide with names in any header file(s) you might include.
-
-#define FFT_N     65536
-#define FSAMPLING 120E6
-
-// RBW_LENGTH = 27 bins corresponds to Fcenter +/- 50kHz
-// 27 ~ 50E3 / (FSAMPLING / FFT_N)
-#define RBW_LENGTH   27
 
 struct sComplex {
     double re;
     double im;
 };
 
-struct sEMI_RECEIVER
+struct sDATA_BLOCK
 {
-  // declare the structure here
    double tprev;
-
+   double tstart;
    double tsampling;
-   int counter;
    int set;
-
-   double x1prev;
-   double x2prev;
+   double in1prev, in2prev;
 
    double window[FFT_N];
    double window_sum;
-   double rbw_window[RBW_LENGTH + 1];
+   float rbw_window[RBW_LENGTH + 1];
 
-   struct sComplex dd1[FFT_N];
-   double mag1[FFT_N / 2];
-   double rbw1[FFT_N / 2][4];
+   // 16 Overlapping Counters & Data Buffers (A through P)
+   int counterA; struct sComplex ddA[FFT_N][2];
+   int counterB; struct sComplex ddB[FFT_N][2];
+   int counterC; struct sComplex ddC[FFT_N][2];
+   int counterD; struct sComplex ddD[FFT_N][2];
+   int counterE; struct sComplex ddE[FFT_N][2];
+   int counterF; struct sComplex ddF[FFT_N][2];
+   int counterG; struct sComplex ddG[FFT_N][2];
+   int counterH; struct sComplex ddH[FFT_N][2];
+   int counterI; struct sComplex ddI[FFT_N][2];
+   int counterJ; struct sComplex ddJ[FFT_N][2];
+   int counterK; struct sComplex ddK[FFT_N][2];
+   int counterL; struct sComplex ddL[FFT_N][2];
+   int counterM; struct sComplex ddM[FFT_N][2];
+   int counterN; struct sComplex ddN[FFT_N][2];
+   int counterO; struct sComplex ddO[FFT_N][2];
+   int counterP; struct sComplex ddP[FFT_N][2];
 
-   struct sComplex dd2[FFT_N];
-   double mag2[FFT_N / 2];
-   double rbw2[FFT_N / 2][4];
+   float rbw1[FMAX / (FSAMPLING / FFT_N)][6], rbw2[FMAX / (FSAMPLING / FFT_N)][6];
+   // ======= rbw1, rbw2 ========
+   // col0 = freq
+   // col1 = raw rbw filter output
+   // col2 = average rbw accumulator
+   // col3 = peak rbw
+   // col4 = temp quasi peak rbw
+   // col5 = final quasi peak rbw
 
-   // mag_RBW col 0 : Freq in Hz
-   // mag_RBW col 1 : Raw RBW output
-   // mag_RBW col 2 : RBW average output by accumulator then divide by sample
-   // mag_RBW col 3 : RBW peak output
+   float qp_buf1[FMAX / (FSAMPLING / FFT_N)][QP_BUFFER_LENGTH], qp_buf2[FMAX / (FSAMPLING / FFT_N)][QP_BUFFER_LENGTH];
 };
 
+#define FFT_BUFFER_FILLING(COUNTER, BUFFER1, BUFFER2)                \
+      if(COUNTER >= 0)                                               \
+      {                                                              \
+         BUFFER1[COUNTER].re = inst->window[COUNTER] * in1interp;    \
+         BUFFER2[COUNTER].re = inst->window[COUNTER] * in2interp;    \
+      }                                                              \
+      COUNTER++;
+
+#define FFT_EXECUTION(COUNTER, BUFFER1, BUFFER2)                                                                  \
+      if(COUNTER >= FFT_N) {                                                                                      \
+         compute_spectrum(BUFFER1, &inst->window_sum, inst->rbw1, inst->rbw_window, &inst->set, inst->qp_buf1);   \
+         compute_spectrum(BUFFER2, &inst->window_sum, inst->rbw2, inst->rbw_window, &inst->set, inst->qp_buf2);   \
+         inst->set++; COUNTER = 0;                                                                                \
+      }
+
+#define QP_LPF(Y,X)                                               \
+      if(X > Y)   Y = Y * QP_LPF_RISE + X * (1. - QP_LPF_RISE);   \
+      else        Y = Y * QP_LPF_FALL + X * (1. - QP_LPF_FALL);
+
 void generate_flat_top_window(double *window, double *window_sum);
-void generate_RBW_window(double *rbw_window);
-void compute_spectrum(struct sComplex *data, double *window_sum, double *mag, double rbw[][4], double *rbw_window);
-extern "C" __declspec(dllexport) void emi_receiver(struct sEMI_RECEIVER **opaque, double t, union uData *data)
+void generate_RBW_window(float *rbw_window);
+void compute_spectrum(struct sComplex *data, double *window_sum, float rbw[][6], float *rbw_window, int *set, float qp_buf[][QP_BUFFER_LENGTH]);
+float cispr32b_avg_limit(float *freq);
+void qp_replay(struct sDATA_BLOCK *inst);
+
+extern "C" __declspec(dllexport) void emi_receiver(struct sDATA_BLOCK **opaque, double t, union uData *data)
 {
-   double in1    = data[0].d; // input
-   double in2    = data[1].d; // input
-   double tstart = data[2].d; // input parameter
+   if(!*ForKeeps) return;
+
+   double in1        = data[0].d; // input
+   double in2        = data[1].d; // input
+   double tstart     = data[2].d; // input parameter
 
    if(!*opaque)
    {
-      *opaque = (struct sEMI_RECEIVER *) malloc(sizeof(struct sEMI_RECEIVER));
-      bzero(*opaque, sizeof(struct sEMI_RECEIVER));
+      *opaque = (struct sDATA_BLOCK *) malloc(sizeof(struct sDATA_BLOCK));
+      bzero(*opaque, sizeof(struct sDATA_BLOCK));
 
-      struct sEMI_RECEIVER *inst = *opaque;
+      struct sDATA_BLOCK *inst   = *opaque;
+      inst->tstart               = tstart;
+      inst->tsampling            = tstart;
 
-      inst->tsampling = tstart;
+      // 15/16 time domain window overlap setup
+      int offset     = FFT_N / 16;
+      inst->counterA =   0 * offset; inst->counterB =  -1 * offset; inst->counterC =  -2 * offset; inst->counterD =  -3 * offset;
+      inst->counterE =  -4 * offset; inst->counterF =  -5 * offset; inst->counterG =  -6 * offset; inst->counterH =  -7 * offset;
+      inst->counterI =  -8 * offset; inst->counterJ =  -9 * offset; inst->counterK = -10 * offset; inst->counterL = -11 * offset;
+      inst->counterM = -12 * offset; inst->counterN = -13 * offset; inst->counterO = -14 * offset; inst->counterP = -15 * offset;
+
       generate_flat_top_window(inst->window, &inst->window_sum);
       generate_RBW_window(inst->rbw_window);
    }
-   struct sEMI_RECEIVER *inst = *opaque;
+   struct sDATA_BLOCK *inst = *opaque;
 
-// Implement module evaluation code here:
    if(inst->tprev <= inst->tsampling && inst->tsampling < t)
    {
-      double xslope1 = (in1 * 1E6 - inst->x1prev) / (t - inst->tprev);
-      double xslope2 = (in2 * 1E6 - inst->x2prev) / (t - inst->tprev);
+      double in1interp, in2interp;
+      double in1slope = (in1 * 1E6 - inst->in1prev) / (t - inst->tprev);
+      double in2slope = (in2 * 1E6 - inst->in2prev) / (t - inst->tprev);
       while(1)
       {
-         inst->dd1[inst->counter].re = inst->x1prev + xslope1 *(inst->tsampling - inst->tprev);
-         inst->dd1[inst->counter].re *= inst->window[inst->counter];
+         in1interp = inst->in1prev + in1slope *(inst->tsampling - inst->tprev);
+         in2interp = inst->in2prev + in2slope *(inst->tsampling - inst->tprev);
 
-         inst->dd2[inst->counter].re = inst->x2prev + xslope2 *(inst->tsampling - inst->tprev);
-         inst->dd2[inst->counter].re *= inst->window[inst->counter];
+         // Channel Streaming Real-Time Windowing
+         // comment out the unnecessary window overlap level as needed
+         // Non overlap
+         FFT_BUFFER_FILLING(inst->counterA, inst->ddA[0], inst->ddA[1])
 
-         inst->counter++;
+            // 50% overlap
+            FFT_BUFFER_FILLING(inst->counterI, inst->ddI[0], inst->ddI[1])
+
+               // 75% overlap
+               FFT_BUFFER_FILLING(inst->counterE, inst->ddE[0], inst->ddE[1])
+               FFT_BUFFER_FILLING(inst->counterM, inst->ddM[0], inst->ddM[1])
+
+                  // 87.5% overlap
+                  FFT_BUFFER_FILLING(inst->counterC, inst->ddC[0], inst->ddC[1])
+                  FFT_BUFFER_FILLING(inst->counterG, inst->ddG[0], inst->ddG[1])
+                  FFT_BUFFER_FILLING(inst->counterK, inst->ddK[0], inst->ddK[1])
+                  FFT_BUFFER_FILLING(inst->counterO, inst->ddO[0], inst->ddO[1])
+
+                     //93.75% overlap
+                     FFT_BUFFER_FILLING(inst->counterB, inst->ddB[0], inst->ddB[1])
+                     FFT_BUFFER_FILLING(inst->counterD, inst->ddD[0], inst->ddD[1])
+                     FFT_BUFFER_FILLING(inst->counterF, inst->ddF[0], inst->ddF[1])
+                     FFT_BUFFER_FILLING(inst->counterH, inst->ddH[0], inst->ddH[1])
+                     FFT_BUFFER_FILLING(inst->counterJ, inst->ddJ[0], inst->ddJ[1])
+                     FFT_BUFFER_FILLING(inst->counterL, inst->ddL[0], inst->ddL[1])
+                     FFT_BUFFER_FILLING(inst->counterN, inst->ddN[0], inst->ddN[1])
+                     FFT_BUFFER_FILLING(inst->counterP, inst->ddP[0], inst->ddP[1])
+
+         // Execute Independent Spectrum Pipeline transformations upon reaching buffer ceilings
+         // comment out the unnecessary window overlap level as needed
+         // Non overlap
+         FFT_EXECUTION(inst->counterA, inst->ddA[0], inst->ddA[1])
+
+            // 50% overlap
+            FFT_EXECUTION(inst->counterI, inst->ddI[0], inst->ddI[1])
+
+               // 75% overlap
+               FFT_EXECUTION(inst->counterE, inst->ddE[0], inst->ddE[1])
+               FFT_EXECUTION(inst->counterM, inst->ddM[0], inst->ddM[1])
+
+                  // 87.5% overlap
+                  FFT_EXECUTION(inst->counterC, inst->ddC[0], inst->ddC[1])
+                  FFT_EXECUTION(inst->counterG, inst->ddG[0], inst->ddG[1])
+                  FFT_EXECUTION(inst->counterK, inst->ddK[0], inst->ddK[1])
+                  FFT_EXECUTION(inst->counterO, inst->ddO[0], inst->ddO[1])
+
+                     // 93.75% overlap
+                     FFT_EXECUTION(inst->counterB, inst->ddB[0], inst->ddB[1])
+                     FFT_EXECUTION(inst->counterD, inst->ddD[0], inst->ddD[1])
+                     FFT_EXECUTION(inst->counterF, inst->ddF[0], inst->ddF[1])
+                     FFT_EXECUTION(inst->counterH, inst->ddH[0], inst->ddH[1])
+                     FFT_EXECUTION(inst->counterJ, inst->ddJ[0], inst->ddJ[1])
+                     FFT_EXECUTION(inst->counterL, inst->ddL[0], inst->ddL[1])
+                     FFT_EXECUTION(inst->counterN, inst->ddN[0], inst->ddN[1])
+                     FFT_EXECUTION(inst->counterP, inst->ddP[0], inst->ddP[1])
+
          inst->tsampling += 1. / FSAMPLING;
-
-         if(inst->counter >= FFT_N)
-         {
-            inst->counter = 0;
-            inst->set++;
-
-            compute_spectrum(inst->dd1, &inst->window_sum, inst->mag1, inst->rbw1, inst->rbw_window);
-            compute_spectrum(inst->dd2, &inst->window_sum, inst->mag2, inst->rbw2, inst->rbw_window);
-
-            // average detector accumulator
-            int i = 0;
-            while(inst->rbw1[i][0] != 0)
-            {
-               inst->rbw1[i][2] += inst->rbw1[i][1];
-               if(inst->rbw1[i][3] < inst->rbw1[i][1])inst->rbw1[i][3] = inst->rbw1[i][1];
-
-               inst->rbw2[i][2] += inst->rbw2[i][1];
-               if(inst->rbw2[i][3] < inst->rbw2[i][1])inst->rbw2[i][3] = inst->rbw2[i][1];
-
-               i++;
-            }
-         }
-
-         if(inst->tsampling > t)
-         {
-            break;
-         }
+         if(inst->tsampling > t) break;
       }
    }
 
-   inst->x1prev = in1 * 1E6;
-   inst->x2prev = in2 * 1E6;
+   inst->in1prev = in1 * 1E6;
+   inst->in2prev = in2 * 1E6;
    inst->tprev = t;
 }
 
-extern "C" __declspec(dllexport) void Destroy(struct sEMI_RECEIVER *inst)
+extern "C" __declspec(dllexport) void Destroy(struct sDATA_BLOCK *inst)
 {
+   int i, ii, iii;
    FILE *fp = fopen("EMI_report.csv", "w");
+
+   qp_replay(inst);
 
    fprintf(fp, "Freq,");
    fprintf(fp, "CISPR32A_AVG,CISPR32A_QP,");
    fprintf(fp, "CISPR32B_AVG,CISPR32B_QP,");
-   fprintf(fp, "MAG1_RAW,MAG1_AVG,MAG1_PEAK,");
-   fprintf(fp, "MAG2_RAW,MAG2_AVG,MAG2_PEAK\n");
-   int i = 0;
+   fprintf(fp, "MAG1_RAW,MAG1_AVG,MAG1_PEAK,MAG1_QP,");
+   fprintf(fp, "MAG2_RAW,MAG2_AVG,MAG2_PEAK,MAG2_QP\n");
+
+   i = 0;
    while(inst->rbw1[i][0] != 0.0)
    {
-      // compute the reference limit for CISPR32A/B AVG and Quasi-Peak
-      double cispr32b;
-      if(inst->rbw1[i][0] <= 500E3)
-      {
-         cispr32b = 630.957 * pow(150000/inst->rbw1[i][0], 0.95625);
-      }
-      else
-      {
-         if(inst->rbw1[i][0] <= 5E6)
-         {
-            cispr32b = 199.5;
-         }
-         else
-         {
-            cispr32b = 316.2;
-         }
-      }
-
-
       fprintf(fp, "%f,", inst->rbw1[i][0]);
       fprintf(fp, "%.10f,0,%.10f,0,", inst->rbw1[i][0]<500E3?8913.:4466.8, inst->rbw1[i][0]<500E3?2000.:1000.);
-      fprintf(fp, "%.10f,0,%.10f,0,", cispr32b, cispr32b*3.16);
-      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0,", inst->rbw1[i][1], inst->rbw1[i][2]/inst->set, inst->rbw1[i][3]);
-      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0\n", inst->rbw2[i][1], inst->rbw2[i][2]/inst->set, inst->rbw2[i][3]);
+      fprintf(fp, "%.10f,0,%.10f,0,", cispr32b_avg_limit(&inst->rbw1[i][0]), cispr32b_avg_limit(&inst->rbw1[i][0]) * 3.16);
+      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0,%.10f,0,", inst->rbw1[i][1], inst->rbw1[i][2]/inst->set, inst->rbw1[i][3], inst->rbw1[i][5]);
+      fprintf(fp, "%.10f,0,%.10f,0,%.10f,0,%.10f,0\n", inst->rbw2[i][1], inst->rbw2[i][2]/inst->set, inst->rbw2[i][3], inst->rbw2[i][5]);
       i++;
    }
 
    fclose(fp);
 
-   char *a = "\"c:\\Program Files\\QSPICE\\QUX\" ";
+   char a[256] = "\"c:\\Program Files\\QSPICE\\QUX\" ";
    strcat(a, "EMI_report.csv");
    system(a);
-   a = "";
 
    free(inst);
 }
 
 void generate_flat_top_window(double *window, double *window_sum)
 {
-/**
- * Generates a Flat Top window function.
- * @param window Array to store the generated window coefficients.
- * @param N      The total number of data points.
- */
-    // Standard Flat Top window coefficients
     const double a0 = 0.21557895;
     const double a1 = 0.41663158;
     const double a2 = 0.27726315;
@@ -272,54 +332,49 @@ void generate_flat_top_window(double *window, double *window_sum)
     for (int n = 0; n < FFT_N; n++)
     {
       double theta = (2.0 * M_PI * n) / denom;
-
-      window[n] = a0
-                  - a1 * cos(theta)
-                  + a2 * cos(2.0 * theta)
-                  - a3 * cos(3.0 * theta)
-                  + a4 * cos(4.0 * theta);
+      window[n] = a0 - a1 * cos(theta) + a2 * cos(2.0 * theta) - a3 * cos(3.0 * theta) + a4 * cos(4.0 * theta);
       *window_sum += window[n];
     }
 }
 
-void generate_RBW_window(double *rbw_window)
+void generate_RBW_window(float *rbw_window)
 {
-/**
- * Generates the weight sum normalized RBW window for -6dB attenuation at +/-4.5kHz sideband
- */
-   double rbw_sum = 0.;
+   float rbw_sum = 0.;
+   float k = 0.;
+   int i;
 
    rbw_window[0] = 1.;
    rbw_sum = rbw_window[0];
-   for(int n = 1; n <= RBW_LENGTH; n++)
+   for(i = 1; i <= RBW_LENGTH; i++)
    {
-      double k = n * ((double)FSAMPLING / (double)FFT_N) / 6993.64; // for RBW -6dB at 9kHz
-      //double k = n * ((double)FSAMPLING / (double)FFT_N) / 2745.85; // for RBW -6dB at 9kHz
+      k = i * ((float)FSAMPLING / (float)FFT_N) / RBW_BI_LORENTZIAN_CONSTANT;
       k = 1. / (1. + k * k);
-      rbw_window[n] = k * k;
-
-      rbw_sum += 2. * rbw_window[n];
+      rbw_window[i] = k * k;
+      rbw_sum += 2. * rbw_window[i];
    }
 
-   for(int n = 0; n <= RBW_LENGTH; n++)
+   for(i = 0; i <= RBW_LENGTH; i++)
    {
-      rbw_window[n] /= rbw_sum;
+      rbw_window[i] /= rbw_sum;
    }
 }
 
-void compute_spectrum(struct sComplex *data, double *window_sum, double *mag, double rbw[][4], double *rbw_window)
+void compute_spectrum(struct sComplex *data, double *window_sum, float rbw[][6], float *rbw_window, int *set, float qp_buf[][QP_BUFFER_LENGTH])
 {
    int i, ii, iii;
-   int imin = floor(150E3 / ((double)FSAMPLING / (double)FFT_N));
-   int imax = ceil(30E6 / ((double)FSAMPLING / (double)FFT_N));
-   double rere = 0;
-   double imim = 0;
+   int imin = (int)floor((double)FMIN / ((double)FSAMPLING / (double)FFT_N));
+   int imax = (int)ceil((double)FMAX / ((double)FSAMPLING / (double)FFT_N));
+   double rere, imim;
 
+   static double mag[FFT_N/2];
+
+   // Call FFT function
    i = DFFT(data, false, FFT_N, 1./(double)FFT_N);
 
-   // Dont compute the spectrum magnitude until FFT_N/2
-   // instead only until 30MHz + a few extra right sideband for RBW calculation
-   for(i = 0; i <= imax + 2*RBW_LENGTH; i++)
+   // spectrum euclidean magnitude computation
+   // limit the magnitude at frequency only until the required 30MHz max band
+   // add a few bins extra to meet the RBW sideband bins
+   for(i = 0; i <= imax + 2 * RBW_LENGTH; i++)
    {
       if(i == 0) mag[0] = data[0].re * FFT_N / *window_sum;
       else if(i != FFT_N/2)
@@ -328,25 +383,112 @@ void compute_spectrum(struct sComplex *data, double *window_sum, double *mag, do
          imim = data[i].im - data[FFT_N-i].im;
          mag[i] = sqrt(rere*rere + imim*imim) * FFT_N / *window_sum;
       }
-      else mag[FFT_N/2] = sqrt(data[FFT_N / 2].re*data[FFT_N / 2].re + data[FFT_N / 2].im*data[FFT_N / 2].im) *
-                                 FFT_N / *window_sum;
+      else mag[FFT_N/2] = sqrt(data[FFT_N / 2].re*data[FFT_N / 2].re + data[FFT_N / 2].im*data[FFT_N / 2].im) * FFT_N / *window_sum;
    }
 
    iii = 0;
    for(i = imin; i <= imax; i++)
    {
-      //in mag_RBW array, enforce the array element 0 to hold the minimum frequency (150kHz).
-      rbw[iii][0] = i * (double)FSAMPLING / (double)FFT_N;
-      rbw[iii][1] = rbw_window[0] * mag[i];
-      for(int ii = 1; ii <= RBW_LENGTH; ii++)
+      // Apply weighted window RBW filter in frequency domain
+      rbw[iii][0] = i * (float)FSAMPLING / (float)FFT_N;
+      rbw[iii][1] = rbw_window[0] * (float)mag[i];
+      for(ii = 1; ii <= RBW_LENGTH; ii++)
       {
          rbw[iii][1] += rbw_window[ii] * (mag[i-ii] + mag[i+ii]);
       }
 
-      // Final gain compensation to map 1V input signal to exactly -3dB.
-      rbw[iii][1] *= 1.164056256;
-      // rbw[iii][1] *= 0.793153011151;
+      // RBW filter gain correction to match 2Vpp input signal to 117dBuV
+      rbw[iii][1] *= RBW_GAIN_CORRECTION;
+
+      // average detector accumulator
+      rbw[iii][2] += rbw[iii][1];
+
+      // peak detector
+      if(rbw[iii][3] < rbw[iii][1]) rbw[iii][3] = rbw[iii][1];
+
+      // QP low pass filter and QP peak detector
+      QP_LPF(rbw[iii][4],rbw[iii][1])
+      if(rbw[iii][5] < rbw[iii][4]) rbw[iii][5] = rbw[iii][4];
+
+      // store the raw RBW output for later QP replay
+      // Use modulo to wrap the index back to 0 if it exceeds the buffer length
+      int circular_idx = (*set) % QP_BUFFER_LENGTH;
+      qp_buf[iii][circular_idx] = rbw[iii][1];
 
       iii++;
    }
+}
+
+float cispr32b_avg_limit(float *freq)
+{
+   if(*freq <= 500E3)
+   {
+      return 630.957 * pow(150000/ *freq, 0.95625);
+   }
+   else
+   {
+      if(*freq <= 5E6) return 199.5;
+      else return 316.2;
+   }
+}
+
+void qp_replay(struct sDATA_BLOCK *inst)
+{
+   // virtual qp detector replay processing loop function
+   // this function will replay the stored time history RBW raw filter output
+   // the duration for the QP detector processing is at least for total 1sec duration to ensure QP steady state
+   //
+   // note: max buffer size can only store up to 100ms RBW filter output
+   // The buffer acts as circular buffer, means when duration overflow,
+   // then the oldest data will be replaced with the newest data
+   // and the qp replay will only take the latest 100ms duration value.
+
+   int rep_max;
+   double duration = *CKTtime - inst->tstart;
+   if(duration > 0.1) rep_max = (int)ceil((1. - duration)/0.1);
+   else rep_max = (int)ceil(1. / duration);
+
+   int bin_idx = 0;
+
+   // Determine how many valid elements are actually in the buffer
+   int total_frames = (inst->set > QP_BUFFER_LENGTH) ? QP_BUFFER_LENGTH : inst->set;
+
+   // If wrapped, the oldest data starts at (inst->set % QP_BUFFER_LENGTH)
+   // If not wrapped, it starts at 0
+   int start_ptr = (inst->set > QP_BUFFER_LENGTH) ? (inst->set % QP_BUFFER_LENGTH) : 0;
+
+   // Loop through every valid frequency bin calculated in compute_spectrum
+   while(inst->rbw1[bin_idx][0] != 0.0)
+   {
+      // Replay the sequence multiple times to allow the 160ms time constant to settle
+      // start with run_count = 1 since the first run has occurred in actual real-time sim
+      for(int run_count = 1; run_count < rep_max; run_count++)
+      {
+         for(int f_idx = 0; f_idx < total_frames; f_idx++)
+         {
+            // Calculate chronological index using modulo to handle wrap-around
+            int time_idx = (start_ptr + f_idx) % QP_BUFFER_LENGTH;
+
+            // Extract the historic instantaneous magnitude
+            float raw_val1 = inst->qp_buf1[bin_idx][time_idx];
+            float raw_val2 = inst->qp_buf2[bin_idx][time_idx];
+
+            // Apply the asymmetrical Charge/Discharge LPF macro to Channel 1
+            QP_LPF(inst->rbw1[bin_idx][4], raw_val1)
+            if(inst->rbw1[bin_idx][5] < inst->rbw1[bin_idx][4])
+            {
+               inst->rbw1[bin_idx][5] = inst->rbw1[bin_idx][4];
+            }
+
+            // Apply the asymmetrical Charge/Discharge LPF macro to Channel 2
+            QP_LPF(inst->rbw2[bin_idx][4], raw_val2)
+            if(inst->rbw2[bin_idx][5] < inst->rbw2[bin_idx][4])
+            {
+               inst->rbw2[bin_idx][5] = inst->rbw2[bin_idx][4];
+            }
+         }
+      }
+      bin_idx++;
+   }
+   // =================================================================
 }
