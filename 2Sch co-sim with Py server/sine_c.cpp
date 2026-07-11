@@ -11,8 +11,7 @@ extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)    = 0; /
 extern "C" __declspec(dllexport) const double *DegreesC                   = 0; // pointer to current circuit temperature
 
 // Berkeley Socket API:
-#define SINE_SIDE    2
-#define TRI_SIDE     3
+#define EVAL_FUNC_SEND    2
 
 extern "C" __declspec(dllexport) unsigned int (*BerkeleySocket)(const char *hostPortServiceString, int Ninputs, int Noutputs, unsigned char **buffer) = 0;
 extern "C" __declspec(dllexport) int  (*SocketSend )(unsigned int socket, unsigned char *buffer, int count) = 0;
@@ -66,7 +65,7 @@ extern "C" __declspec(dllexport) void sine_c(struct sSINE_C **opaque, double t, 
 
    if(t >= inst->time_goal)
    {
-      double *vector = ConfigureBuffer(inst->buffer, SINE_SIDE);
+      double *vector = ConfigureBuffer(inst->buffer, EVAL_FUNC_SEND);
       vector[0]      = t;
       vector[1]      = in1;
       SocketSend(inst->ConnectSocket, inst->buffer, 12 + 8 * Ninputs );
@@ -76,6 +75,7 @@ extern "C" __declspec(dllexport) void sine_c(struct sSINE_C **opaque, double t, 
       inst->time_goal   = ((double *) inst->buffer)[0];
       out1              = ((double *) inst->buffer)[1];
       double skip       = ((double *) inst->buffer)[2];
+
    }
 
    inst->max_step = inst->time_goal - t;

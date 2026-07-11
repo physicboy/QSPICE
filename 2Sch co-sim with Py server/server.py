@@ -17,7 +17,7 @@ data_lock = threading.Lock()
 
 def handle_client_connection(port):
     """Function that runs inside its own thread to handle a specific port."""
-    local_time_goal = 0.0
+    local_time_goal = timestep
 
     # Determine the "target" or opposite port for crossing the data
     other_port = 10005 if port == 10004 else 10004
