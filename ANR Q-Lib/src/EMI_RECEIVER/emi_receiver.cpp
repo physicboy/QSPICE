@@ -288,6 +288,7 @@ extern "C" __declspec(dllexport) void emi_receiver(struct sDATA_BLOCK **opaque, 
 
 extern "C" __declspec(dllexport) void Destroy(struct sDATA_BLOCK *inst)
 {
+   Display("EMI QP Detector Processing~~~");
    int i, ii, iii;
    FILE *fp = fopen("EMI_report.csv", "w");
 
