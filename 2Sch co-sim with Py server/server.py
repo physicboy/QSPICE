@@ -1,99 +1,134 @@
 import socket
 import struct
+import sys
 import threading
 
 # Shared configuration constants
-PORT_EVALUATE = 2
+LISTENING_PORT = 10004
 timestep = 0.00001
 
-# --- Synchronization Mechanisms ---
-# A barrier for 2 threads ensures both have received data before proceeding
-sync_barrier = threading.Barrier(2)
+# --- Scalability Configuration ---
+EXPECTED_CLIENTS = 2
 
-# Shared dictionary to exchange incoming data between threads
+
+sync_barrier = threading.Barrier(EXPECTED_CLIENTS)
 shared_data = {}
 data_lock = threading.Lock()
 
 
-def handle_client_connection(port):
-    """Function that runs inside its own thread to handle a specific port."""
+def handle_client_connection(conn, addr):
+    """Handles a client connection, and self-terminates the script if any client drops."""
     local_time_goal = timestep
+    client_id = None
 
-    # Determine the "target" or opposite port for crossing the data
-    other_port = 10005 if port == 10004 else 10004
+    print(f"[Socket Server] Handling new raw connection from {addr}")
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(("", port))
-        s.listen()
-        print(f"Server listening on port {port}...")
-
-        conn, addr = s.accept()
+    try:
         with conn:
-            print(f"[{port}] Connected by {addr}")
             while True:
                 try:
                     data = conn.recv(28)
                     if not data:
+                        print(f"\n[DISCONNECT] Client {client_id if client_id else addr} dropped connection (Clean Close).")
                         break
                 except Exception as e:
-                    print(f"[{port}] Exception: {e}")
+                    print(f"\n[CRASH] Client {client_id if client_id else addr} dropped with exception: {e}")
                     break
 
-                cmd = ((memoryview(data)[0:4]).cast("i"))[0]
-                if cmd == PORT_EVALUATE:
-                    inputs = (memoryview(data)[4 : len(data)]).cast("d")
-                    simTime = inputs[0]
-                    in1 = inputs[1]
+                # Extract Client ID
+                incoming_id = ((memoryview(data)[0:4]).cast("i"))[0]
 
-                    # 1. Calculate the output based on THIS port's inputs
-                    out1 = in1
-                    
-                    # 2. Save this thread's calculated data and current time_goal
-                    with data_lock:
-                        shared_data[port] = {
-                            "time_goal": local_time_goal,
-                            "out1": out1
-                        }
+                if client_id is None:
+                    client_id = incoming_id
+                    print(f"[{addr}] Identified successfully as Client {client_id}.")
 
-                    try:
-                        # 3. Wait here until the other thread has saved its data too
-                        sync_barrier.wait()
-                    except threading.BrokenBarrierError:
-                        break
+                # 1. Calculate output
+                inputs = (memoryview(data)[4 : len(data)]).cast("d")
+                simTime = inputs[0]
+                in1 = inputs[1]
+                out1 = in1
+                
+                # 2. Save data
+                with data_lock:
+                    shared_data[client_id] = {
+                        "time_goal": local_time_goal,
+                        "out1": out1
+                    }
 
-                    # 4. CROSSOVER: Fetch the data saved by the OTHER thread
-                    with data_lock:
-                        crossed_data = shared_data[other_port]
+                try:
+                    # 3. MULTI-CLIENT BARRIER
+                    sync_barrier.wait()
+                except threading.BrokenBarrierError:
+                    print(f"[System Shutdown] Client {client_id} exiting due to a peer disconnecting.")
+                    return  # Instantly drop out of this thread execution
 
-                    # 5. Pack and send the OTHER thread's data back to THIS client
-                    response_data = bytearray(
-                        struct.pack(
-                            "ddd", 
-                            crossed_data["time_goal"], 
-                            crossed_data["out1"], 
-                            2 * crossed_data["out1"]
-                        )
+                # 4. MULTI-CLIENT CROSSOVER
+                sum_other_out1 = 0.0
+                other_count = 0
+
+                with data_lock:
+                    for oid, odata in shared_data.items():
+                        if oid != client_id:
+                            sum_other_out1 += odata["out1"]
+                            other_count += 1
+
+                avg_other_out1 = (sum_other_out1 / other_count) if other_count > 0 else 0.0
+
+                # 5. Pack and send back
+                response_data = bytearray(
+                    struct.pack(
+                        "ddd", 
+                        local_time_goal, 
+                        avg_other_out1, 
+                        2 * avg_other_out1
                     )
-                    conn.sendall(response_data)
+                )
+                conn.sendall(response_data)
 
-                    # 6. Increment this thread's independent local time goal
-                    local_time_goal += timestep
+                # 6. Increment independent local time goal
+                local_time_goal += timestep
+
+    finally:
+        # --- SHUTDOWN TRIGGER ---
+        # This block runs whenever a thread finishes its connection loop (either by break or exception)
+        print(f"[Cleanup] Terminating session for Client {client_id if client_id else addr}...")
+        
+        with data_lock:
+            if client_id is not None:
+                shared_data.pop(client_id, None)
+        
+        # Resetting the barrier instantly forces a BrokenBarrierError 
+        # on ALL other threads currently waiting on it.
+        if not sync_barrier.broken:
+            sync_barrier.reset()
 
 
-# --- Thread Initialization & Start ---
+# --- Dynamic Server Initialization ---
 
-ports_to_serve = [10004, 10005]
-threads = []
+def start_server():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(("", LISTENING_PORT))
+        s.listen(EXPECTED_CLIENTS)
+        print(f"Server listening on SINGLE port {LISTENING_PORT}...")
+        print(f"Awaiting EXACTLY {EXPECTED_CLIENTS} clients before starting execution loop...")
 
-for port in ports_to_serve:
-    t = threading.Thread(target=handle_client_connection, args=(port,))
-    t.daemon = True
-    t.start()
-    threads.append(t)
+        threads = []
+        for i in range(EXPECTED_CLIENTS):
+            conn, addr = s.accept()
+            print(f"[Progress] Client {i+1}/{EXPECTED_CLIENTS} connected.")
+            t = threading.Thread(target=handle_client_connection, args=(conn, addr))
+            t.daemon = True
+            t.start()
+            threads.append(t)
 
-print("Main thread continues to run alongside both crossed socket servers...")
+        print(f"\nAll {EXPECTED_CLIENTS} clients connected successfully! Starting simulation loop.\n")
+        
+        # Block the main thread until the worker threads exit.
+        for t in threads:
+            t.join()
+            
+        print("\nAll threads joined. Server script terminating safely.")
 
-# Keep main thread active
-for t in threads:
-    t.join()
+if __name__ == "__main__":
+    start_server()
