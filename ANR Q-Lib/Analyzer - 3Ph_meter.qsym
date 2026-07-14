@@ -1,0 +1,17 @@
+ÿØÿÛ«symbol Analyzer - 3Ph_meter
+  «type: X»
+  «library file: |.subckt Analyzer v1 i1 v2 i2 v3 i3\nØ´X4 «v1´d i1´d v2´d i2´d v3´d i3´d» «» «» _3ph_analyzer double start=start double fund=fund double vnom=vnom\n.ends Analyzer»
+  «shorted pins: false»
+  «rect (0,-1200) (1400,0) 0 0 0 0xff0000 0x4000000 -1 0 -1»
+  «text (50,100) 1 7 0 0x1000000 -1 -1 "3Ph_meter1"»
+  «text (1300,100) 1 15 2 0x1000000 -1 -1 "ANALYZER"»
+  «text (357,-350) 1 7 0 0x1000000 -1 -1 "start=0.25"»
+  «text (357,-550) 1 7 0 0x1000000 -1 -1 "vnom=310"»
+  «text (357,-750) 1 7 0 0x1000000 -1 -1 "fund=50"»
+  «pin (0,-100) (20,0) 1 7 0 0x0 -1 "v1"»
+  «pin (0,-300) (20,0) 1 7 0 0x0 -1 "i1"»
+  «pin (0,-500) (20,0) 1 7 0 0x0 -1 "v2"»
+  «pin (0,-700) (20,0) 1 7 0 0x0 -1 "i2"»
+  «pin (0,-900) (20,0) 1 7 0 0x0 -1 "v3"»
+  «pin (0,-1100) (20,0) 1 7 0 0x0 -1 "i3"»
+»

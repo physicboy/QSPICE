@@ -8,7 +8,7 @@ LISTENING_PORT = 10004
 timestep = 0.00001
 
 # --- Scalability Configuration ---
-EXPECTED_CLIENTS = 2
+EXPECTED_CLIENTS = 3
 
 
 sync_barrier = threading.Barrier(EXPECTED_CLIENTS)
@@ -42,17 +42,16 @@ def handle_client_connection(conn, addr):
                     client_id = incoming_id
                     print(f"[{addr}] Identified successfully as Client {client_id}.")
 
-                # 1. Calculate output
+# 1. Calculate output
                 inputs = (memoryview(data)[4 : len(data)]).cast("d")
                 simTime = inputs[0]
                 in1 = inputs[1]
-                out1 = in1
                 
-                # 2. Save data
+                # 2. Save data (Save 'in1' instead of 'out1')
                 with data_lock:
                     shared_data[client_id] = {
                         "time_goal": local_time_goal,
-                        "out1": out1
+                        "in1": in1
                     }
 
                 try:
@@ -60,27 +59,24 @@ def handle_client_connection(conn, addr):
                     sync_barrier.wait()
                 except threading.BrokenBarrierError:
                     print(f"[System Shutdown] Client {client_id} exiting due to a peer disconnecting.")
-                    return  # Instantly drop out of this thread execution
+                    return  
 
-                # 4. MULTI-CLIENT CROSSOVER
-                sum_other_out1 = 0.0
-                other_count = 0
-
+                # 4. MULTI-CLIENT AGGREGATION
+                # Gather all 'in1' values sorted strictly by Client ID
                 with data_lock:
-                    for oid, odata in shared_data.items():
-                        if oid != client_id:
-                            sum_other_out1 += odata["out1"]
-                            other_count += 1
-
-                avg_other_out1 = (sum_other_out1 / other_count) if other_count > 0 else 0.0
+                    sorted_client_ids = sorted(shared_data.keys())
+                    sorted_in1_values = [shared_data[cid]["in1"] for cid in sorted_client_ids]
 
                 # 5. Pack and send back
+                # Dynamically build the struct format string based on the number of clients.
+                # e.g., For 3 clients, format is 'd' + 'ddd' = 'dddd' (time_goal + 3 inputs)
+                struct_format = "d" + ("d" * len(sorted_in1_values))
+                
                 response_data = bytearray(
                     struct.pack(
-                        "ddd", 
+                        struct_format, 
                         local_time_goal, 
-                        avg_other_out1, 
-                        2 * avg_other_out1
+                        *sorted_in1_values  # Unpacks the list into individual arguments
                     )
                 )
                 conn.sendall(response_data)

@@ -8,6 +8,8 @@
 
 extern "C" __declspec(dllexport) void (*Display)(const char *format, ...) = 0; // works like printf()
 extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)    = 0; // print message like printf() but exit(0) afterward
+extern "C" __declspec(dllexport) const double *CKTtime                    = 0;
+extern "C" __declspec(dllexport) const double *CKTdelta                   = 0;
 extern "C" __declspec(dllexport) const double *DegreesC                   = 0; // pointer to current circuit temperature
 
 extern "C" __declspec(dllexport) unsigned int (*BerkeleySocket)(const char *hostPortServiceString, int Ninputs, int Noutputs, unsigned char **buffer) = 0;
@@ -36,12 +38,17 @@ union uData
 int __stdcall DllMain(void *module, unsigned int reason, void *reserved) { return 1; }
 
 const int Ninputs  = 1;
-const int Noutputs = 3;
+const int Noutputs = 11;
 
 struct sCLIENT
 {
    unsigned int ConnectSocket;
    unsigned char *buffer;
+
+   double in1prev;
+   double time_goal_prev;
+
+   double insum;
 
    double time_goal;
    double max_step;
@@ -52,7 +59,9 @@ extern "C" __declspec(dllexport) void client(struct sCLIENT **opaque, double t, 
    double       in1    = data[0].d  ; // input
    const char * server = data[1].str; // input parameter
    int          id     = data[2].i  ; // input parameter
-   double      &out1   = data[3].d  ; // output
+   int          read   = data[3].i  ; // input parameter
+   double      &out1   = data[4].d  ; // output
+
    if(!*opaque)
    {
       *opaque = (struct sCLIENT *) calloc(1, sizeof(struct sCLIENT));
@@ -60,22 +69,24 @@ extern "C" __declspec(dllexport) void client(struct sCLIENT **opaque, double t, 
    }
    struct sCLIENT *inst = *opaque;
 
-
+   inst->insum += 0.5 * (in1 + inst->in1prev) * *CKTdelta;
    if(t >= inst->time_goal)
    {
       double *vector = ConfigureBuffer(inst->buffer, id);
       vector[0]      = t;
-      vector[1]      = in1;
+      vector[1]      = inst->insum / (t - inst->time_goal_prev);
       SocketSend(inst->ConnectSocket, inst->buffer, 12 + 8 * Ninputs );
 
+      inst->insum = 0;
 
       SocketRecv(inst->ConnectSocket, inst->buffer,      8 * Noutputs);
       inst->time_goal   = ((double *) inst->buffer)[0];
-      out1              = ((double *) inst->buffer)[1];
-      double skip       = ((double *) inst->buffer)[2];
+      out1              = ((double *) inst->buffer)[read];
 
+      inst->time_goal_prev = t;
    }
 
+   inst->in1prev  = in1;
    inst->max_step = inst->time_goal - t;
    if(inst->max_step < 5E-9) inst->max_step = 10E-9;
 }
