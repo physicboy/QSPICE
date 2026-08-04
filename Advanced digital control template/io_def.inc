@@ -1,0 +1,9 @@
+double  vout = data[0].d; // input
+double  iout = data[1].d; // input
+bool   &hi   = data[2].b; // output
+bool   &lo   = data[3].b; // output
+double &cmp  = data[4].d; // output
+double &iref = data[5].d; // output
+double &dbg0 = data[6].d; // output
+double &dbg1 = data[7].d; // output
+double &dbg2 = data[8].d; // output
