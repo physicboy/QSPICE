@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <windows.h>
 
 // Frequency bin resolution 1kHz, sample length 2^17 to aim for max BW of ~6MHz
 #define FFT_N        131072
@@ -310,13 +311,14 @@ extern "C" __declspec(dllexport) void Destroy(struct sDATA_BLOCK *inst)
       fprintf(fp, "%.10f,0,%.10f,0,%.10f,0,%.10f,0\n", inst->rbw2[i][1], inst->rbw2[i][2]/inst->set, inst->rbw2[i][3], inst->rbw2[i][5]);
       i++;
    }
-
+   fflush(fp);
+   fflush(NULL);
    fclose(fp);
 
    char a[256] = "\"c:\\Program Files\\QSPICE\\QUX\" ";
    strcat(a, "EMI_report.csv");
    system(a);
-
+   Sleep(1000);
    free(inst);
 }
 

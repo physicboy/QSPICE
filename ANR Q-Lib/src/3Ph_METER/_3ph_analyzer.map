@@ -1,7 +1,7 @@
 
  Start         Length     Name                   Class
- 0003:00000000 00006977H  _TEXT                  CODE 32-bit
- 0003:00006978 000000C6H  ICODE                  ICODE 32-bit
+ 0003:00000000 00006997H  _TEXT                  CODE 32-bit
+ 0003:00006998 000000CCH  ICODE                  ICODE 32-bit
  0004:00000000 00000004H  .CRT$XIA               DATA 32-bit
  0004:00000010 00000004H  .CRT$XIZ               DATA 32-bit
  0004:00000020 00000004H  .CRT$XCA               DATA 32-bit
@@ -35,4 +35,4 @@
  0004:00002B20 000001E5H  c_common               BSS 32-bit
  0004:00002D10 00000000H  STACK                  STACK 32-bit
 
-Program entry point at 0000454C 
+Program entry point at 00004578 

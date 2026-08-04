@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <windows.h>
 
 extern "C" __declspec(dllexport) void (*Display)(const char *format, ...)       = 0; // works like printf()
 extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)          = 0; // print message like printf() but exit(0) afterward
@@ -358,6 +359,8 @@ extern "C" __declspec(dllexport) void Destroy(struct sDATA *inst)
       fprintf(fptr,"P1,Q1,PF1,vfund1,vrms1,vthd1,ifund1,irms1,ithd1,");
       fprintf(fptr,"P2,Q2,PF2,vfund2,vrms2,vthd2,ifund2,irms2,ithd2,");
       fprintf(fptr,"P3,Q3,PF3,vfund3,vrms3,vthd3,ifund3,irms3,ithd3\n");
+      fflush(fptr);
+      fflush(NULL);
       fclose(fptr);
    }
 
@@ -374,7 +377,12 @@ extern "C" __declspec(dllexport) void Destroy(struct sDATA *inst)
       p1, q1, pf1, vfund1, vrms1, vthd1 * 100, ifund1, irms1, ithd1 * 100,
       p2, q2, pf2, vfund2, vrms2, vthd2 * 100, ifund2, irms2, ithd2 * 100,
       p3, q3, pf3, vfund3, vrms3, vthd3 * 100, ifund3, irms3, ithd3 * 100);
+   
+   fflush(fptr);
+   fflush(NULL);
    fclose(fptr);
+   
+   Sleep(1000);
    free(inst);
 }
 

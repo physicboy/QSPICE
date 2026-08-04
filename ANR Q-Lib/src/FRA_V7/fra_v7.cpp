@@ -27,6 +27,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <windows.h>
 
 extern "C" __declspec(dllexport) void (*Display)(const char *format, ...)       = 0; // works like printf()
 extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)          = 0; // print message like printf() but exit(0) afterward
@@ -490,5 +491,6 @@ extern "C" __declspec(dllexport) void Destroy(struct sFRA_V7 *inst)
       strcat(a, inst->fra.fname);
       if(inst->plot) system(a);
    }
+   Sleep(1000);
    free(inst);
 }
