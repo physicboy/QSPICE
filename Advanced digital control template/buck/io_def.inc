@@ -7,3 +7,4 @@ double &iref = data[5].d; // output
 double &dbg0 = data[6].d; // output
 double &dbg1 = data[7].d; // output
 double &dbg2 = data[8].d; // output
+double &dbg3 = data[9].d; // output

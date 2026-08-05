@@ -9,25 +9,15 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
-// Automatically generated C++ file on Tue Aug  4 16:52:50 2026
-//
-// To build with Digital Mars C++ Compiler:
-//
-//    dmc -mn -WD -o buck.cpp kernel32.lib
+// Automatically generated file for QSPICE Digital Control C-Block
 
-#define TSAMPLING 5E-6
+#define TSAMPLING 5.000E-6
 #define PWM_CH    1
 #define TBPRD     1000
 #define DTIME     20
-#define DGTL_CLK  10E-9
+#define DGTL_CLK  1.000E-8
 
 #include <malloc.h>
 #include <math.h>
@@ -35,14 +25,10 @@
 #include "pwm_edge_handler.h"
 #include "interrupt_handler.h"
 
-// int DllMain() must exist and return 1 for a process to load the .DLL
-// See https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain for more information.
 int __stdcall DllMain(void *module, unsigned int reason, void *reserved) { return 1; }
 
 struct sDGTL_CTRL_BLK
 {
-   // declare the structure here
-   double tprev;
    double tsampling;
 
    int    counter;
@@ -61,10 +47,7 @@ struct sDGTL_CTRL_BLK
 
 extern "C" __declspec(dllexport) void buck(struct sDGTL_CTRL_BLK **opaque, double t, union uData *data)
 {
-   if(*ForKeeps == 0)
-   {
-      return;
-   }
+   if(*ForKeeps == 0) return;
 
    #include "io_def.inc"
 
@@ -73,65 +56,58 @@ extern "C" __declspec(dllexport) void buck(struct sDGTL_CTRL_BLK **opaque, doubl
       *opaque = (struct sDGTL_CTRL_BLK *) malloc(sizeof(struct sDGTL_CTRL_BLK));
       bzero(*opaque, sizeof(struct sDGTL_CTRL_BLK));
 
-      // initialize the C-block parameters
-
       (*opaque)->counter = -1;
-      (*opaque)->pwm[0].prd = TBPRD;
-      (*opaque)->pwm[0].dt = DTIME;
+      for(int i = 0; i < PWM_CH; i++) {
+         (*opaque)->pwm[i].prd = TBPRD;
+         (*opaque)->pwm[i].dt = DTIME;
+      }
    }
 
    bool stepped = 0;
    struct sDGTL_CTRL_BLK *inst = *opaque;
 
-   // pwm timing handling
+   // Handle PWM state machine edge transitions (Unwrapped per channel for custom edge handler substitution)
    pwm_edge(&inst->pwm[0], &stepped);
 
-   if(inst->tprev <= inst->tsampling && t >= inst->tsampling)
+   // Discrete Sampling & Interrupt Dispatch Logic
+   if(*CKTtime - *CKTdelta <= inst->tsampling && *CKTtime >= inst->tsampling)
    {
       inst->tsampling += TSAMPLING;
 
       inst->counter += 1;
       if(inst->counter >= 4) inst->counter = 0;
 
-
       switch(inst->counter)
       {
          case 0:
-            // carrier valley
+            // Carrier Valley Interrupt
             interrupt0(&inst->data, inst->pwm, data);
             break;
          case 1:
-            //
+            // Mid-Carrier Upslope (4x Oversampling)
             interrupt1(&inst->data, inst->pwm, data);
             break;
          case 2:
-            // carrier peak
+            // Carrier Peak Interrupt
             interrupt2(&inst->data, inst->pwm, data);
             break;
          case 3:
+            // Mid-Carrier Downslope (4x Oversampling)
             interrupt3(&inst->data, inst->pwm, data);
             break;
       }
-
    }
 
-   // ===================================================
-   hi   = inst->pwm[0].outa;
-   lo   = inst->pwm[0].outb;
-   iref = (double)inst->pwm[0].cmpa;
-   dbg0 = 0;
-   dbg1 = 0;
-   dbg2 = 0;
-   // ===================================================
+   // Map PWM states and other outputs to available ports, example:
+   hi = inst->pwm[0].outa;
+   lo = inst->pwm[0].outb;
 
-   inst->tprev = t;
-
+   // Adaptive Solver Timestep Control across all PWM channels
    if(stepped) inst->maxstep = DGTL_CLK;
    else
    {
       inst->maxstep = inst->tsampling - t;
-      for(int i = 0; i < PWM_CH; i++)
-      {
+      for(int i = 0; i < PWM_CH; i++) {
          MAXSTEP(i);
       }
       if(inst->maxstep <= DGTL_CLK / 2) inst->maxstep = DGTL_CLK;

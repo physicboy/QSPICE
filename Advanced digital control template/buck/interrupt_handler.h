@@ -10,4 +10,4 @@ extern void interrupt1(struct sINTERRUPT *a, struct sPWM pwm[], union uData *dat
 extern void interrupt2(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data);
 extern void interrupt3(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data);
 
-#endif // PWM_EDGE_HANDLER_H
+#endif // INTERRUPT_HANDLER_H

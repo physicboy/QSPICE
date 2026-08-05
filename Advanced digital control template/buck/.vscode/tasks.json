@@ -1,0 +1,58 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build and Clean",
+			"dependsOn": [
+				"*** DMC 32-bit DLL *** dmc.exe build active file",
+				"clean only"
+			],
+			"dependsOrder": "sequence",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false,
+				"close": false
+			}
+		},
+		{
+			"type": "cppbuild",
+			"label": "*** DMC 32-bit DLL *** dmc.exe build active file",
+			"command": "C:\\program files\\qspice\\dm\\bin\\dmc.exe",
+			"args": [
+				"-mn",
+				"-WD",
+				"-w",
+				"buck.cpp",
+				"-o",
+				"..\\buck.dll",
+				"kernel32.lib"
+			],
+			"options": {},
+			"problemMatcher": [],
+			"detail": "compiler: C:\\Program Files\\QSPICE\\dm\\bin\\dmc.exe"
+		},
+		{
+			"label": "clean only",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"del /Q buck.obj buck.def buck.map ..\\buck.obj ..\\buck.def ..\\buck.map 2>nul"
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"presentation": {
+				"close": false
+			}
+		}
+	]
+}
