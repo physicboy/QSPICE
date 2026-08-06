@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QSPICE Digital Control C-Block Code Generator</title>
+    <!-- JSZip for multi-file ZIP packaging -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Prism.js Light CSS for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --panel-bg: #ffffff;
+            --accent-color: #007acc;
+            --accent-hover: #005999;
+            --text-color: #2c3e50;
+            --text-muted: #606f7b;
+            --code-bg: #f8fafc;
+            --border-color: #cbd5e1;
+            --input-bg: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 10px 14px;
+            overflow: hidden; /* Prevent horizontal and vertical viewport scrollbars */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        h1, h2, h3 {
+            margin: 0;
+            color: #1a202c;
+        }
+
+        .header {
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 4px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 1.2em;
+        }
+
+        .subtitle {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        button.btn-download-top {
+            padding: 5px 12px;
+            background-color: var(--accent-color);
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.82em;
+        }
+
+        button.btn-download-top:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Fixed grid layout designed for laptop screen bounds */
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .panel-left {
+            overflow-y: auto;
+        }
+
+        .panel-left h2 {
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 6px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.74em;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%;
+            padding: 4px 6px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: #2d3748;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 0.76em;
+            transition: border-color 0.15s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        textarea {
+            resize: vertical;
+            height: 85px;
+            line-height: 1.2;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 4px;
+        }
+
+        .logo-img {
+            max-width: 140px;
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            padding: 3px 6px;
+            background-color: #edf2f7;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            color: #4a5568;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 0.75em;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .tab:hover {
+            color: var(--accent-color);
+            background-color: #e2e8f0;
+        }
+
+        .tab.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .code-container {
+            position: relative;
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            overflow: auto;
+        }
+
+        pre[class*="language-"] {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 0.78em;
+            line-height: 1.3;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            padding: 3px 8px;
+            font-size: 0.7em;
+            background: #e2e8f0;
+            color: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .copy-btn:hover {
+            background: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-left">
+            <h1>QSPICE Digital Control C-Block Code Generator</h1>
+            <div class="subtitle">Author: Arief Noor Rahman</div>
+        </div>
+        <button class="btn-download-top" onclick="downloadZipProject()">Download Project (.ZIP)</button>
+    </div>
+
+    <div class="container">
+        <!-- Configuration Controls -->
+        <div class="panel panel-left">
+            <h2>Parameters</h2>
+            
+            <div class="form-group">
+                <label for="moduleName">Module / Symbol Name:</label>
+                <input type="text" id="moduleName" value="buck" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="dllPath">DLL Output Relative Path (e.g. ../ or ../output/):</label>
+                <input type="text" id="dllPath" value="" placeholder="Leave blank for root, or specify e.g. ../" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="dgtlClkNs">Digital Clock Resolution - DGTL_CLK (ns):</label>
+                <input type="number" id="dgtlClkNs" value="10" step="0.1" min="0.1" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="pwmCh">PWM Channels - PWM_CH:</label>
+                <input type="number" id="pwmCh" value="1" min="1" max="16" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="tSwSec">Switching Period - TSW (s):</label>
+                <input type="text" id="tSwSec" value="10e-6" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="tSamplingSec">Sampling Period - TSAMPLING (s):</label>
+                <input type="text" id="tSamplingSec" value="5e-6" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="deadtimeNs">Dead Time (ns):</label>
+                <input type="number" id="deadtimeNs" value="200" oninput="generateCode()">
+            </div>
+
+            <div class="form-group">
+                <label for="ioDefText">Paste QSPICE io_def.inc content:</label>
+                <textarea id="ioDefText" placeholder="Paste pin definitions from QSPICE C-block..." oninput="generateCode()">double  vout = data[0].d; // input
+double  iout = data[1].d; // input
+bool   &hi   = data[2].b; // output
+bool   &lo   = data[3].b; // output
+double &cmp  = data[4].d; // output
+double &iref = data[5].d; // output
+double &dbg0 = data[6].d; // output
+double &dbg1 = data[7].d; // output
+double &dbg2 = data[8].d; // output</textarea>
+            </div>
+
+            <!-- External Logo Image -->
+            <div class="logo-container">
+                <img class="logo-img" src="https://lh3.googleusercontent.com/sitesv/AG8ngQWHluFcP_M1b7s2kHK-SC6pFWCbsRuC4M1Re-Xh5rz0ghUX_7Zxy8U4xU3omKGTmVT02cdq7yI3jrNF41uNDLdPgn1hOHAKpC1DpF-WSHR17mybq5-A9boRHIzZCJuEmdO_RoxCkFsBPCNM5sO_nZGcDVE3aY6CQ5k82KTFFmYaHhALmmo7cQwlppuEJYo=w1280" alt="Power Control Design Logo">
+            </div>
+        </div>
+
+        <!-- Output Code Viewer -->
+        <div class="panel">
+            <div class="tabs" id="tabBar">
+                <!-- Dynamic Compact Tabs -->
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCurrentCode()">Copy Code</button>
+                <pre><code id="codeViewer" class="language-cpp"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prism.js Engine & C++ Language Pack -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+    <script>
+        const fileTemplates = {};
+        let activeTab = 'main.cpp';
+
+        function formatSciNotation(val) {
+            return val.toExponential(3).toUpperCase().replace('+','');
+        }
+
+        function formatDllOutputPath(relPath, symbol) {
+            let path = relPath.trim().replace(/\//g, '\\');
+            if (!path || path === '.' || path === '.\\' || path === './') {
+                return `${symbol}.dll`;
+            }
+            while (path.endsWith('\\')) {
+                path = path.slice(0, -1);
+            }
+            
+            // Escape backslashes for JSON compatibility
+            const escapedPath = path.replace(/\\/g, '\\\\');
+            return `${escapedPath}\\\\${symbol}.dll`;
+        }
+
+        function getCleanTargetDirPath(relPath) {
+            let path = relPath.trim().replace(/\//g, '\\');
+            if (!path || path === '.' || path === '.\\' || path === './') {
+                return '';
+            }
+            while (path.endsWith('\\')) {
+                path = path.slice(0, -1);
+            }
+            const escapedPath = path.replace(/\\/g, '\\\\');
+            return `${escapedPath}\\\\`;
+        }
+
+        function generateCode() {
+            const name = document.getElementById('moduleName').value.trim() || 'buck';
+            const rawDllPath = document.getElementById('dllPath').value;
+            const dgtlClkSec = (parseFloat(document.getElementById('dgtlClkNs').value) || 10) * 1e-9;
+            const pwmCh = parseInt(document.getElementById('pwmCh').value) || 1;
+            
+            const tSwSec = parseFloat(document.getElementById('tSwSec').value) || 10e-6;
+            const tSamplingSec = parseFloat(document.getElementById('tSamplingSec').value) || 5e-6;
+            const dtNs = parseFloat(document.getElementById('deadtimeNs').value) || 0;
+            const ioDefRaw = document.getElementById('ioDefText').value;
+
+            const dgtlClkStr = formatSciNotation(dgtlClkSec);
+            const tsamplingStr = formatSciNotation(tSamplingSec);
+            
+            const tbprd = Math.round(tSwSec / (2.0 * dgtlClkSec));
+            const dtime = Math.round((dtNs * 1e-9) / dgtlClkSec);
+            const formattedDllArg = formatDllOutputPath(rawDllPath, name);
+            const targetDirPrefix = getCleanTargetDirPath(rawDllPath);
+
+            let pwmEdgeUnwrapped = '';
+            for (let i = 0; i < pwmCh; i++) {
+                pwmEdgeUnwrapped += `   pwm_edge(&inst->pwm[${i}], &stepped);\n`;
+            }
+
+            // Construct exact-symbol delete command (e.g. buck.obj buck.def buck.map)
+            let deleteCmdArgs = `del /Q ${name}.obj ${name}.def ${name}.map`;
+            if (targetDirPrefix !== '') {
+                deleteCmdArgs += ` ${targetDirPrefix}${name}.obj ${targetDirPrefix}${name}.def ${targetDirPrefix}${name}.map`;
+            }
+            deleteCmdArgs += ` 2>nul`;
+
+            // 1. MAIN C++ FILE
+            fileTemplates['main.cpp'] = `/*
+ * Copyright 2026 Arief Noor Rahman - Power Control Design
+ *
+ * Project  : ${name}
+ * Filename : ${name}.cpp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
+
+// Automatically generated file for QSPICE Digital Control C-Block
+
+#define TSAMPLING ${tsamplingStr}
+#define PWM_CH    ${pwmCh}
+#define TBPRD     ${tbprd}
+#define DTIME     ${dtime}
+#define DGTL_CLK  ${dgtlClkStr}
+
+#include <malloc.h>
+#include <math.h>
+#include "udata.h"
+#include "pwm_edge_handler.h"
+#include "interrupt_handler.h"
+
+int __stdcall DllMain(void *module, unsigned int reason, void *reserved) { return 1; }
+
+struct sDGTL_CTRL_BLK
+{
+   double tsampling;
+
+   int    counter;
+   double maxstep;
+
+   struct sPWM pwm[PWM_CH];
+
+   struct sINTERRUPT data;
+};
+
+#define MAXSTEP(PWM)    if(t < inst->pwm[PWM].t_prd && inst->maxstep > (inst->pwm[PWM].t_prd - t))inst->maxstep = inst->pwm[PWM].t_prd - t;\\
+                        if(t < inst->pwm[PWM].t_zero && inst->maxstep > (inst->pwm[PWM].t_zero - t))inst->maxstep = inst->pwm[PWM].t_zero - t;\\
+                        if(t < inst->pwm[PWM].t_on && inst->maxstep > (inst->pwm[PWM].t_on - t))inst->maxstep = inst->pwm[PWM].t_on - t;\\
+                        if(t < inst->pwm[PWM].t_off && inst->maxstep > (inst->pwm[PWM].t_off - t))inst->maxstep = inst->pwm[PWM].t_off - t;\\
+                        if(t < inst->pwm[PWM].t_dly && inst->maxstep > (inst->pwm[PWM].t_dly - t))inst->maxstep = inst->pwm[PWM].t_dly - t;
+
+extern "C" __declspec(dllexport) void ${name}(struct sDGTL_CTRL_BLK **opaque, double t, union uData *data)
+{
+   if(*ForKeeps == 0) return;
+
+   #include "io_def.inc"
+
+   if(!*opaque)
+   {
+      *opaque = (struct sDGTL_CTRL_BLK *) malloc(sizeof(struct sDGTL_CTRL_BLK));
+      bzero(*opaque, sizeof(struct sDGTL_CTRL_BLK));
+
+      (*opaque)->counter = -1;
+      for(int i = 0; i < PWM_CH; i++) {
+         (*opaque)->pwm[i].prd = TBPRD;
+         (*opaque)->pwm[i].dt = DTIME;
+      }
+   }
+
+   bool stepped = 0;
+   struct sDGTL_CTRL_BLK *inst = *opaque;
+
+   // Handle PWM state machine edge transitions (Unwrapped per channel for custom edge handler substitution)
+${pwmEdgeUnwrapped}
+   // Discrete Sampling & Interrupt Dispatch Logic
+   if(*CKTtime - *CKTdelta <= inst->tsampling && *CKTtime >= inst->tsampling)
+   {
+      inst->tsampling += TSAMPLING;
+
+      inst->counter += 1;
+      if(inst->counter >= 4) inst->counter = 0;
+
+      switch(inst->counter)
+      {
+         case 0:
+            // Carrier Valley Interrupt
+            interrupt0(&inst->data, inst->pwm, data);
+            break;
+         case 1:
+            // Mid-Carrier Upslope (4x Oversampling)
+            interrupt1(&inst->data, inst->pwm, data);
+            break;
+         case 2:
+            // Carrier Peak Interrupt
+            interrupt2(&inst->data, inst->pwm, data);
+            break;
+         case 3:
+            // Mid-Carrier Downslope (4x Oversampling)
+            interrupt3(&inst->data, inst->pwm, data);
+            break;
+      }
+   }
+
+   // Map PWM states and other outputs to available ports, example:
+   // out1 = inst->pwm[0].outa;
+   // out2 = inst->pwm[0].outb;
+
+   // Adaptive Solver Timestep Control across all PWM channels
+   if(stepped) inst->maxstep = DGTL_CLK;
+   else
+   {
+      inst->maxstep = inst->tsampling - t;
+      for(int i = 0; i < PWM_CH; i++) {
+         MAXSTEP(i);
+      }
+      if(inst->maxstep <= DGTL_CLK / 2) inst->maxstep = DGTL_CLK;
+   }
+}
+
+extern "C" __declspec(dllexport) double MaxExtStepSize(struct sDGTL_CTRL_BLK *inst, double t)
+{
+   return inst->maxstep;
+}
+
+extern "C" __declspec(dllexport) void Destroy(struct DGTL_CTRL_BLK *inst)
+{
+   free(inst);
+}`;
+
+            // 2. INTERRUPT HANDLER C FILE
+            fileTemplates['interrupt_handler.c'] = `struct sINTERRUPT
+{
+   double temp;
+   double v_err_int;
+};
+
+void interrupt0(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
+{
+   #include "io_def.inc"
+   // Control algorithm executed at carrier valley
+   // Direct access to all PWM channels: pwm[0], pwm[1], ... pwm[PWM_CH - 1]
+   pwm[0].cmpa = (int)(TBPRD * 0.5);
+}
+
+void interrupt1(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
+{
+   #include "io_def.inc"
+   // Mid-carrier up-slope (4x oversampling feedback measurement)
+}
+
+void interrupt2(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
+{
+   #include "io_def.inc"
+   // Control algorithm executed at carrier peak
+}
+
+void interrupt3(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
+{
+   #include "io_def.inc"
+   // Mid-carrier down-slope (4x oversampling feedback measurement)
+}`;
+
+            // 3. INTERRUPT HANDLER HEADER
+            fileTemplates['interrupt_handler.h'] = `#ifndef INTERRUPT_HANDLER_H
+#define INTERRUPT_HANDLER_H
+
+#include "udata.h"
+#include "interrupt_handler.c"
+
+extern struct sINTERRUPT;
+extern void interrupt0(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data);
+extern void interrupt1(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data);
+extern void interrupt2(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data);
+extern void interrupt3(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data);
+
+#endif // INTERRUPT_HANDLER_H`;
+
+            // 4. PWM EDGE HANDLER C FILE (Updated per request)
+            fileTemplates['pwm_edge_handler.c'] = `struct sPWM
+{
+   int prd, dt;
+   int cmpa, cmpb;
+   double t_zero, t_prd;
+   double t_on, t_off, t_dly;
+   bool pwm, pwm_dly;
+   bool outa, outb;
+};
+
+void pwm_edge(struct sPWM *a, bool *stepped)
+{
+   double tprev = *CKTtime - *CKTdelta;
+
+   if(tprev <= a->t_on && *CKTtime >= a->t_on)
+   {
+      *stepped = 1;
+      a->pwm = 1;
+      a->t_dly = *CKTtime + a->dt * DGTL_CLK;
+   }
+
+   if(tprev <= a->t_off && *CKTtime >= a->t_off)
+   {
+      *stepped = 1;
+      a->pwm = 0;
+      a->t_dly = *CKTtime + a->dt * DGTL_CLK;
+   }
+
+   if(tprev <= a->t_dly && *CKTtime >= a->t_dly)
+   {
+      *stepped = 1;
+      a->pwm_dly = a->pwm;
+   }
+
+   if(tprev <= a->t_prd && *CKTtime >= a->t_prd)
+   {
+      
+   }
+
+   if(tprev <= a->t_zero && *CKTtime >= a->t_zero)
+   {
+      a->t_prd  = *CKTtime + 1. * (double)a->prd * DGTL_CLK;
+      a->t_zero = *CKTtime + 2. * (double)a->prd * DGTL_CLK;
+      
+      if(a->cmpa == a->prd) {
+         a->t_on = *CKTtime + DGTL_CLK * (double)a->prd;
+      } else if(a->cmpa == 0) {
+         a->t_off = *CKTtime + 2. * (double)a->prd * DGTL_CLK;
+      } else {
+         a->t_on = *CKTtime + DGTL_CLK * (double)(2*a->prd - a->cmpa);
+         a->t_off = *CKTtime + DGTL_CLK * (double)a->cmpa;
+      }
+   }
+
+   a->outa = a->pwm && a->pwm_dly;
+   a->outb = !a->pwm && !a->pwm_dly;
+}`;
+
+            // 5. PWM EDGE HANDLER HEADER
+            fileTemplates['pwm_edge_handler.h'] = `#ifndef PWM_EDGE_HANDLER_H
+#define PWM_EDGE_HANDLER_H
+
+#include "udata.h"
+#include "pwm_edge_handler.c"
+
+extern struct sPWM;
+extern void pwm_edge(struct sPWM *a, bool *stepped);
+
+#endif // PWM_EDGE_HANDLER_H`;
+
+            // 6. IO DEF INCLUDE
+            fileTemplates['io_def.inc'] = ioDefRaw;
+
+            // 7. QSPICE UDATA HEADER
+            fileTemplates['udata.h'] = `#ifndef UDATA_H
+#define UDATA_H
+
+union uData
+{
+   bool b;
+   char c;
+   unsigned char uc;
+   short s;
+   unsigned short us;
+   int i;
+   unsigned int ui;
+   float f;
+   double d;
+   long long int i64;
+   unsigned long long int ui64;
+   char *str;
+   unsigned char *bytes;
+};
+
+extern "C" __declspec(dllexport) void (*Display)(const char *format, ...)       = 0;
+extern "C" __declspec(dllexport) void (*EXIT)(const char *format, ...)          = 0;
+extern "C" __declspec(dllexport) const double *DegreesC                         = 0;
+extern "C" __declspec(dllexport) const int *StepNumber                          = 0;
+extern "C" __declspec(dllexport) const int *NumberSteps                         = 0;
+extern "C" __declspec(dllexport) const char* const *InstanceName                = 0;
+extern "C" __declspec(dllexport) const char *QUX                                = 0;
+extern "C" __declspec(dllexport) const bool *ForKeeps                           = 0;
+extern "C" __declspec(dllexport) const bool *HoldICs                            = 0;
+extern "C" __declspec(dllexport) const void *GUI_HWND                           = 0;
+extern "C" __declspec(dllexport) const double *CKTtime                          = 0;
+extern "C" __declspec(dllexport) const double *CKTdelta                         = 0;
+extern "C" __declspec(dllexport) const int *IntegrationOrder                    = 0;
+extern "C" __declspec(dllexport) const char *InstallDirectory                   = 0;
+extern "C" __declspec(dllexport) double (*EngAtof)(const char **string)         = 0;
+extern "C" __declspec(dllexport) const char *(*BinaryFormat)(unsigned int data) = 0;
+extern "C" __declspec(dllexport) const char *(*EngFormat)(double x, const char *units, int numDgts) = 0;
+extern "C" __declspec(dllexport) int (*DFFT)(struct sComplex *u, bool inv, unsigned int N, double scale) = 0;
+extern "C" __declspec(dllexport) void (*bzero)(void *ptr, unsigned int count)   = 0;
+
+#endif // UDATA_H`;
+
+            // 8. VSCODE CONFIGURATION FILES
+            fileTemplates['.vscode/c_cpp_properties.json'] = `{
+    "configurations": [
+        {
+            "name": "Win32",
+            "compilerPath": "C:\\\\program files\\\\qspice\\\\dm\\\\bin\\\\dmc.exe",
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c99",
+            "includePath": [
+                "\${workspaceFolder}",
+                "C:/Program Files/QSPICE/dm/include"
+            ],
+            "defines": [
+                "_DEBUG"
+            ]
+        }
+    ],
+    "version": 4
+}`;
+
+            fileTemplates['.vscode/settings.json'] = `{
+    "files.associations": {
+        "*.inc": "plaintext"
+    }
+}`;
+
+            // Sequential cppbuild + cleanup tasks structure targeting exact symbol output artifacts
+            fileTemplates['.vscode/tasks.json'] = `{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build and Clean",
+			"dependsOn": [
+				"*** DMC 32-bit DLL *** dmc.exe build active file",
+				"clean only"
+			],
+			"dependsOrder": "sequence",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false,
+				"close": false
+			}
+		},
+		{
+			"type": "cppbuild",
+			"label": "*** DMC 32-bit DLL *** dmc.exe build active file",
+			"command": "C:\\\\program files\\\\qspice\\\\dm\\\\bin\\\\dmc.exe",
+			"args": [
+				"-mn",
+				"-WD",
+				"-w",
+				"${name}.cpp",
+				"-o",
+				"${formattedDllArg}",
+				"kernel32.lib"
+			],
+			"options": {},
+			"problemMatcher": [],
+			"detail": "compiler: C:\\\\Program Files\\\\QSPICE\\\\dm\\\\bin\\\\dmc.exe"
+		},
+		{
+			"label": "clean only",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"${deleteCmdArgs}"
+			],
+			"options": {
+				"cwd": "\${fileDirname}"
+			},
+			"presentation": {
+				"close": false
+			}
+		}
+	]
+}`;
+
+            renderTabs();
+            renderCode();
+        }
+
+        function renderTabs() {
+            const tabBar = document.getElementById('tabBar');
+            const moduleName = document.getElementById('moduleName').value.trim() || 'buck';
+            tabBar.innerHTML = '';
+            
+            const fileKeys = Object.keys(fileTemplates);
+
+            fileKeys.forEach(key => {
+                const displayLabel = (key === 'main.cpp') ? `${moduleName}.cpp` : key;
+                
+                const tab = document.createElement('div');
+                tab.className = `tab ${key === activeTab ? 'active' : ''}`;
+                tab.innerText = displayLabel;
+                tab.onclick = () => {
+                    activeTab = key;
+                    renderTabs();
+                    renderCode();
+                };
+                tabBar.appendChild(tab);
+            });
+        }
+
+        function renderCode() {
+            const codeViewer = document.getElementById('codeViewer');
+            const langClass = activeTab.endsWith('.json') ? 'language-json' : 'language-cpp';
+            
+            codeViewer.className = langClass;
+            codeViewer.textContent = fileTemplates[activeTab] || '';
+            
+            // Trigger Prism.js Syntax Highlighting
+            if (window.Prism) {
+                Prism.highlightElement(codeViewer);
+            }
+        }
+
+        function copyCurrentCode() {
+            const codeText = fileTemplates[activeTab];
+            navigator.clipboard.writeText(codeText).then(() => {
+                alert(`Copied code to clipboard!`);
+            });
+        }
+
+        function downloadZipProject() {
+            const moduleName = document.getElementById('moduleName').value.trim() || 'buck';
+            const zip = new JSZip();
+
+            // Create a dedicated root folder named after the module inside the zip
+            const projectFolder = zip.folder(moduleName);
+
+            // Add all files into the subfolder
+            Object.keys(fileTemplates).forEach(key => {
+                const fileName = (key === 'main.cpp') ? `${moduleName}.cpp` : key;
+                if (key.startsWith('.vscode/')) {
+                    // Maintain .vscode folder structure inside the project folder
+                    projectFolder.folder(".vscode").file(key.replace('.vscode/', ''), fileTemplates[key]);
+                } else {
+                    projectFolder.file(fileName, fileTemplates[key]);
+                }
+            });
+
+            zip.generateAsync({type: "blob"}).then(function(content) {
+                const element = document.createElement('a');
+                element.href = URL.createObjectURL(content);
+                element.download = `${moduleName}_qspice_project.zip`;
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            });
+        }
+
+        // Initial launch
+        generateCode();
+    </script>
+</body>
+</html>
