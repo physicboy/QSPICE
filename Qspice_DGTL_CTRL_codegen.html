@@ -109,6 +109,8 @@
 
         .panel-left {
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .panel-left h2 {
@@ -118,6 +120,15 @@
 
         .form-group {
             margin-bottom: 6px;
+        }
+
+        /* Expand the io_def form-group to fill remaining vertical room */
+        .form-group.flex-expand {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0;
+            min-height: 120px;
         }
 
         label {
@@ -147,24 +158,9 @@
 
         textarea {
             resize: vertical;
-            height: 85px;
+            height: 100%;
+            flex: 1;
             line-height: 1.2;
-        }
-
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
-            padding-top: 4px;
-        }
-
-        .logo-img {
-            max-width: 140px;
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 8px;
         }
 
         .tabs {
@@ -292,7 +288,7 @@
                 <input type="number" id="deadtimeNs" value="200" oninput="generateCode()">
             </div>
 
-            <div class="form-group">
+            <div class="form-group flex-expand">
                 <label for="ioDefText">Paste QSPICE io_def.inc content:</label>
                 <textarea id="ioDefText" placeholder="Paste pin definitions from QSPICE C-block..." oninput="generateCode()">double  vout = data[0].d; // input
 double  iout = data[1].d; // input
@@ -303,11 +299,6 @@ double &iref = data[5].d; // output
 double &dbg0 = data[6].d; // output
 double &dbg1 = data[7].d; // output
 double &dbg2 = data[8].d; // output</textarea>
-            </div>
-
-            <!-- External Logo Image -->
-            <div class="logo-container">
-                <img class="logo-img" src="https://lh3.googleusercontent.com/sitesv/AG8ngQWHluFcP_M1b7s2kHK-SC6pFWCbsRuC4M1Re-Xh5rz0ghUX_7Zxy8U4xU3omKGTmVT02cdq7yI3jrNF41uNDLdPgn1hOHAKpC1DpF-WSHR17mybq5-A9boRHIzZCJuEmdO_RoxCkFsBPCNM5sO_nZGcDVE3aY6CQ5k82KTFFmYaHhALmmo7cQwlppuEJYo=w1280" alt="Power Control Design Logo">
             </div>
         </div>
 
@@ -525,8 +516,12 @@ extern "C" __declspec(dllexport) void Destroy(struct DGTL_CTRL_BLK *inst)
             fileTemplates['interrupt_handler.c'] = `struct sINTERRUPT
 {
    double temp;
-   double v_err_int;
+
 };
+
+#define PID(X,XPREV,KP,KITS, K)  K * (KP * ((X) - XPREV) + KITS * (X));  \
+                              XPREV = X;
+#define LPF(Y,X,TAU)          Y = (1. - TAU) * Y + TAU * (X); /*Compute TAU by w*Ts / (1 + w*Ts)  */
 
 void interrupt0(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
 {
@@ -534,24 +529,28 @@ void interrupt0(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
    // Control algorithm executed at carrier valley
    // Direct access to all PWM channels: pwm[0], pwm[1], ... pwm[PWM_CH - 1]
    pwm[0].cmpa = (int)(TBPRD * 0.5);
+   
 }
 
 void interrupt1(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
 {
    #include "io_def.inc"
    // Mid-carrier up-slope (4x oversampling feedback measurement)
+   
 }
 
 void interrupt2(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
 {
    #include "io_def.inc"
    // Control algorithm executed at carrier peak
+   
 }
 
 void interrupt3(struct sINTERRUPT *a, struct sPWM pwm[], union uData *data)
 {
    #include "io_def.inc"
    // Mid-carrier down-slope (4x oversampling feedback measurement)
+   
 }`;
 
             // 3. INTERRUPT HANDLER HEADER
