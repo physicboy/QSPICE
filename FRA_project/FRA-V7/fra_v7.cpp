@@ -198,7 +198,7 @@ extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, 
       if(t > ss_tmax)inst->status = 1;
       inst->fra.i = -0.5;
 
-      amp = inst->fra.i;
+      amp = 0;
       freq = inst->fra.freq;
 
       if(inst->status == 1)
