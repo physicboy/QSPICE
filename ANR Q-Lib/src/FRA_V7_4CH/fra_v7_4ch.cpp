@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NUM_CHANNELS 4
+
 extern "C" __declspec(dllexport) int (*Display)(const char *format, ...) = 0; // works like printf()
 extern "C" __declspec(dllexport) const double *DegreesC                  = 0; // pointer to current circuit temperature
 extern "C" __declspec(dllexport) const int *StepNumber                   = 0; // pointer to current step number
@@ -88,44 +90,30 @@ struct fra_data
    bool bpf_on_off;
    double bpf_k;
 
-   double in1q_inp;
-   double in1q_in;
-   double in1d_inp;
-   double in1d_in;
-   double in2q_inp;
-   double in2q_in;
-   double in2d_inp;
-   double in2d_in;
+   double inq_inp[NUM_CHANNELS];
+   double inq_in[NUM_CHANNELS];
+   double ind_inp[NUM_CHANNELS];
+   double ind_in[NUM_CHANNELS];
 
-   double in1q;
-   double in1d;
-   double in2q;
-   double in2d;
+   double inq[NUM_CHANNELS];
+   double ind[NUM_CHANNELS];
 
-   double x1a;
-   double x1ap;
-   double x1b;
-   double x1bp;
-   double x2a;
-   double x2ap;
-   double x2b;
-   double x2bp;
+   double xa[NUM_CHANNELS];
+   double xap[NUM_CHANNELS];
+   double xb[NUM_CHANNELS];
+   double xbp[NUM_CHANNELS];
 
-   double in1a;
-   double in1b;
-   double in2a;
-   double in2b;
+   double ina[NUM_CHANNELS];
+   double inb[NUM_CHANNELS];
 
-   double in1ph;
-   double in2ph;
-   double in1wrap;
-   double in2wrap;
+   double inph[NUM_CHANNELS];
+   double inwrap[NUM_CHANNELS];
 };
 
-struct sFRA_V7
+struct sFRA_V7_4CH
 {
    // declare the structure here
-   int   status;
+   int    status;
    struct fra_data fra;
 
    double maxstep;
@@ -134,13 +122,13 @@ struct sFRA_V7
    bool plot;
 };
 
-void FRA_CORE(struct fra_data *f, bool *bpf_on_off,
-   double *t, double *t_prev, double *in1, double *in2, double *th);
+void FRA_CORE(struct fra_data *f, bool *bpf_on_off, double *t, double *t_prev,
+   double in[NUM_CHANNELS], double *th);
 
 FILE *fptr;
 char *fname = "fra.csv";
 
-extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, union uData *data)
+extern "C" __declspec(dllexport) void fra_v7_4ch(struct sFRA_V7_4CH **opaque, double t, union uData *data)
 {
    double  IN1           = data[ 0].d; // input
    double  IN2           = data[ 1].d; // input
@@ -149,31 +137,33 @@ extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, 
    double  param2        = data[ 4].d; // input
    double  param3        = data[ 5].d; // input
    double  param4        = data[ 6].d; // input
-   double  f_min         = data[ 7].d; // input parameter
-   double  f_max         = data[ 8].d; // input parameter
-   double  a_lo          = data[ 9].d; // input parameter
-   double  a_hi          = data[10].d; // input parameter
-   double  f_lo          = data[11].d; // input parameter
-   double  f_hi          = data[12].d; // input parameter
-   bool    lin0_log1     = data[13].b; // input parameter
-   double  tstep_factor  = data[14].d; // input parameter
-   double  ss_tmax       = data[15].d; // input parameter
-   double  dwell_mintime = data[16].d; // input parameter
-   double  dwell_period  = data[17].d; // input parameter
-   double  meas_mintime  = data[18].d; // input parameter
-   double  meas_period   = data[19].d; // input parameter
-   int     f_step        = data[20].i; // input parameter
-   bool    plot          = data[21].b; // input parameter
-   bool    bpf_off0_on1  = data[22].b; // input parameter
-   double &amp           = data[23].d; // output
-   double &freq          = data[24].d; // output
+   double  IN3           = data[ 7].d; // input
+   double  IN4           = data[ 8].d; // input
+   double  f_min         = data[ 9].d; // input parameter
+   double  f_max         = data[10].d; // input parameter
+   double  a_lo          = data[11].d; // input parameter
+   double  a_hi          = data[12].d; // input parameter
+   double  f_lo          = data[13].d; // input parameter
+   double  f_hi          = data[14].d; // input parameter
+   bool    lin0_log1     = data[15].b; // input parameter
+   double  tstep_factor  = data[16].d; // input parameter
+   double  ss_tmax       = data[17].d; // input parameter
+   double  dwell_mintime = data[18].d; // input parameter
+   double  dwell_period  = data[19].d; // input parameter
+   double  meas_mintime = data[20].d; // input parameter
+   double  meas_period   = data[21].d; // input parameter
+   int     f_step        = data[22].i; // input parameter
+   bool    plot          = data[23].b; // input parameter
+   bool    bpf_off0_on1  = data[24].b; // input parameter
+   double &amp           = data[25].d; // output
+   double &freq          = data[26].d; // output
 
    if(!*opaque)
    {
-      *opaque = (struct sFRA_V7 *) malloc(sizeof(struct sFRA_V7));
-      bzero(*opaque, sizeof(struct sFRA_V7));
+      *opaque = (struct sFRA_V7_4CH *) malloc(sizeof(struct sFRA_V7_4CH));
+      bzero(*opaque, sizeof(struct sFRA_V7_4CH));
 
-      struct sFRA_V7 *inst = *opaque;
+      struct sFRA_V7_4CH *inst = *opaque;
 
       inst->fra.fmin = f_min;
       inst->fra.fmax = f_max;
@@ -190,9 +180,11 @@ extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, 
 
       inst->plot = plot;
    }
-   struct sFRA_V7 *inst = *opaque;
+   struct sFRA_V7_4CH *inst = *opaque;
 
 // Implement module evaluation code here:
+   double IN_VECTOR[] = {IN1, IN2, IN3, IN4};
+
    if(inst->status == 0)
    {
       if(t > ss_tmax)inst->status = 1;
@@ -203,29 +195,29 @@ extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, 
 
       if(inst->status == 1)
       {
-         Display("\ti\tfreq\tmag(in2/in1)[dB]\targ(in2/in1)[deg]\tmag(in1)[dB]\targ(in1)[deg]\tmag(in2)[dB]\targ(in2)[deg]\n");
+         Display("\ti\tfreq\tsrc_mag[dB]\tsrc_arg[deg]\tin1_mag[dB]\tin1_arg[deg]\tin2_mag[dB]\tin2_arg[deg]\tin3_mag[dB]\tin3_arg[deg]\tin4_mag[dB]\tin4_arg[deg]\n");
 
          if(*StepNumber == 1)
          {
             fptr = fopen(fname,"w");
-            fprintf(fptr,"Frequency,IN2/IN1\n");
+            fprintf(fptr,"Frequency,src,in1,in2,in3,in4\n");
             fclose(fptr);
          }
       }
 
       // BPF initialization
-      inst->fra.in1d = 0;
-      inst->fra.in1q = IN1 * 1.414213562373; // x sqrt(2)
-      inst->fra.in2d = 0;
-      inst->fra.in2q = IN2 * 1.414213562373;
+      for(int ch = 0; ch < NUM_CHANNELS; ch++)
+      {
+         inst->fra.ind[ch] = 0;
+         inst->fra.inq[ch] = IN_VECTOR[ch] * 1.414213562373; // x sqrt(2)
+      }
    }
    else
    {
-      FRA_CORE(&inst->fra, &bpf_off0_on1, &t, &inst->t_prev, &IN1, &IN2, &th);
+      FRA_CORE(&inst->fra, &bpf_off0_on1, &t, &inst->t_prev, IN_VECTOR, &th);
 
       amp = inst->fra.mag;
       freq = inst->fra.freq;
-
 
       // Timing control ===============================================
       if(inst->fra.i >= inst->fra.fstep)inst->maxstep = -1e+308;
@@ -242,42 +234,38 @@ extern "C" __declspec(dllexport) void fra_v7(struct sFRA_V7 **opaque, double t, 
 
 }
 
-void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev, double *in1, double *in2, double *th)
+void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
+   double in[NUM_CHANNELS], double *th)
 {
    // band pass filter
-   f->in1q_inp = f->in1q_in;
-   f->in1q_in = 2 * M_PI * f->freq * f->in1d;
-   f->in1q += 0.5 * (f->in1q_in + f->in1q_inp) * (*t - *t_prev);
-   f->in1d_inp = f->in1d_in;
-   f->in1d_in = 2 * M_PI * f->freq * (f->bpf_k * (*in1 - f->in1d) - f->in1q);
-   f->in1d += 0.5 * (f->in1d_in + f->in1d_inp) * (*t - *t_prev);
-
-   f->in2q_inp = f->in2q_in;
-   f->in2q_in = 2 * M_PI * f->freq * f->in2d;
-   f->in2q += 0.5 * (f->in2q_in + f->in2q_inp) * (*t - *t_prev);
-   f->in2d_inp = f->in2d_in;
-   f->in2d_in = 2 * M_PI * f->freq * (f->bpf_k * (*in2 - f->in2d) - f->in2q);
-   f->in2d += 0.5 * (f->in2d_in + f->in2d_inp) * (*t - *t_prev);
+   for(int ch = 0; ch < NUM_CHANNELS; ch++)
+   {
+      f->inq_inp[ch] = f->inq_in[ch];
+      f->inq_in[ch]  = 2 * M_PI * f->freq * f->ind[ch];
+      f->inq[ch]    += 0.5 * (f->inq_in[ch] + f->inq_inp[ch]) * (*t - *t_prev);
+      f->ind_inp[ch] = f->ind_in[ch];
+      f->ind_in[ch]  = 2 * M_PI * f->freq * (f->bpf_k * (in[ch] - f->ind[ch]) - f->inq[ch]);
+      f->ind[ch]    += 0.5 * (f->ind_in[ch] + f->ind_inp[ch]) * (*t - *t_prev);
+   }
 
    // select whether to use the input signal directly or use BPF output
-   double signal1;
-   double signal2;
-   if(f->bpf_on_off == 0)
+   double signal[NUM_CHANNELS];
+   for(int ch = 0; ch < NUM_CHANNELS; ch++)
    {
-      signal1 = *in1;
-      signal2 = *in2;
-   }
-   else
-   {
-      if(*bpf_off0_on1 == 1)
+      if(f->bpf_on_off == 0)
       {
-         signal1 = f->in1d;
-         signal2 = f->in2d;
+         signal[ch] = in[ch];
       }
       else
       {
-         signal1 = *in1;
-         signal2 = *in2;
+         if(*bpf_off0_on1 == 1)
+         {
+            signal[ch] = f->ind[ch];
+         }
+         else
+         {
+            signal[ch] = in[ch];
+         }
       }
    }
 
@@ -285,20 +273,17 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
    double cth = cos(*th);
    double sth = sin(*th);
 
-   f->x1ap = f->x1a;
-   f->x1bp = f->x1b;
-   f->x2ap = f->x2a;
-   f->x2bp = f->x2b;
+   for(int ch = 0; ch < NUM_CHANNELS; ch++)
+   {
+      f->xap[ch] = f->xa[ch];
+      f->xbp[ch] = f->xb[ch];
 
-   f->x1a = sth * signal1;
-   f->x1b = cth * signal1;
-   f->x2a = sth * signal2;
-   f->x2b = cth * signal2;
+      f->xa[ch] = sth * signal[ch];
+      f->xb[ch] = cth * signal[ch];
 
-   f->in1a += 0.5 * (f->x1a + f->x1ap) * (*t - *t_prev);
-   f->in1b += 0.5 * (f->x1b + f->x1bp) * (*t - *t_prev);
-   f->in2a += 0.5 * (f->x2a + f->x2ap) * (*t - *t_prev);
-   f->in2b += 0.5 * (f->x2b + f->x2bp) * (*t - *t_prev);
+      f->ina[ch] += 0.5 * (f->xa[ch] + f->xap[ch]) * (*t - *t_prev);
+      f->inb[ch] += 0.5 * (f->xb[ch] + f->xbp[ch]) * (*t - *t_prev);
+   }
 
    if(*t >= f->tsampling)
    {
@@ -306,6 +291,7 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
       double ts;
       double fx;
       double freq_p = f->freq;
+      double mag_p  = f->mag;
       if(f->i == floor(f->i))
       {
          if(f->lin0_log1)
@@ -369,70 +355,49 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
          {
             // reset the integrator value
             // at the beginning of measurement period
-            f->in1a = 0;
-            f->in1b = 0;
-            f->in2a = 0;
-            f->in2b = 0;
+            for(int ch = 0; ch < NUM_CHANNELS; ch++)
+            {
+               f->ina[ch] = 0;
+               f->inb[ch] = 0;
+            }
          }
          else
          {
-            double in1am, in1bm, in2am, in2bm;
-            double in1mag, in1ph, in2mag, in2ph;
-            double in21mag, in21ph;
-            in1am = 2/f->ts*(f->in1a);
-            in1bm = 2/f->ts*(f->in1b);
-            in2am = 2/f->ts*(f->in2a);
-            in2bm = 2/f->ts*(f->in2b);
+            double inam[NUM_CHANNELS], inbm[NUM_CHANNELS];
+            double inmag[NUM_CHANNELS], inph[NUM_CHANNELS];
 
-            in1mag = 20*log10(sqrt(in1am*in1am + in1bm*in1bm));
-            in1ph  = 180/M_PI*atan2(in1bm,in1am);
-            in2mag = 20*log10(sqrt(in2am*in2am + in2bm*in2bm));
-            in2ph  = 180/M_PI*atan2(in2bm,in2am);
-
-            in1ph = in1ph + f->in1wrap;
-            in2ph = in2ph + f->in2wrap;
-
-            if(in1ph > (f->in1ph + 270))
+            for(int ch = 0; ch < NUM_CHANNELS; ch++)
             {
-               f->in1wrap -= 360;
-               in1ph += f->in1wrap;
-            }
-            else
-            {
-               if(in1ph < (f->in1ph - 270))
+               inam[ch] = 2/f->ts*(f->ina[ch]);
+               inbm[ch] = 2/f->ts*(f->inb[ch]);
+
+               inmag[ch] = 20*log10(sqrt(inam[ch]*inam[ch] + inbm[ch]*inbm[ch]));
+               inph[ch]  = 180/M_PI*atan2(inbm[ch],inam[ch]);
+
+               inph[ch] = inph[ch] + f->inwrap[ch];
+
+               if(inph[ch] > (f->inph[ch] + 270))
                {
-                  f->in1wrap += 360;
-                  in1ph += f->in1wrap;
+                  f->inwrap[ch] -= 360;
+                  inph[ch] += f->inwrap[ch];
                }
-            }
-
-            if(in2ph > (f->in2ph + 270))
-            {
-               f->in2wrap -= 360;
-               in2ph += f->in2wrap;
-            }
-            else
-            {
-               if(in2ph < (f->in2ph - 270))
+               else
                {
-                  f->in2wrap += 360;
-                  in2ph += f->in2wrap;
+                  if(inph[ch] < (f->inph[ch] - 270))
+                  {
+                     f->inwrap[ch] += 360;
+                     inph[ch] += f->inwrap[ch];
+                  }
                }
+
+               f->inph[ch] = inph[ch];
             }
 
-            f->in1ph = in1ph;
-            f->in2ph = in2ph;
-
-            in21mag = in2mag - in1mag;
-            in21ph = in2ph - in1ph;
-            Display("\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",(int)f->i,freq_p,in21mag,in21ph,in1mag,in1ph,in2mag,in2ph);
-
-            double re,im;
-            re = pow(10,in21mag/20)*cos(in21ph*M_PI/180);
-            im = pow(10,in21mag/20)*sin(in21ph*M_PI/180);
+            Display("\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", (int)f->i, freq_p, 20*log10(mag_p), 0.0, inmag[0], inph[0], inmag[1], inph[1], inmag[2], inph[2], inmag[3], inph[3]);
 
             fptr = fopen(fname,"a");
-            fprintf(fptr,"%f\t%f,%f\n",freq_p,re,im);
+            fprintf(fptr,"%f\t%f,%f\t%f,%f\t%f,%f\t%f,%f\t%f,%f\n", freq_p, mag_p, 0.0, inam[0], inbm[0], inam[1], inbm[1], inam[2], inbm[2], inam[3], inbm[3]);
+
             fclose(fptr);
          }
       }
@@ -440,12 +405,12 @@ void FRA_CORE(struct fra_data *f, bool *bpf_off0_on1, double *t, double *t_prev,
    }
 }
 
-extern "C" __declspec(dllexport) double MaxExtStepSize(struct sFRA_V7 *inst)
+extern "C" __declspec(dllexport) double MaxExtStepSize(struct sFRA_V7_4CH *inst)
 {
    return inst->maxstep; // implement a good choice of max timestep size that depends on struct sFRA_V3
 }
 
-extern "C" __declspec(dllexport) void Destroy(struct sFRA_V7 *inst)
+extern "C" __declspec(dllexport) void Destroy(struct sFRA_V7_4CH *inst)
 {
    if(*StepNumber == *NumberSteps)
    {

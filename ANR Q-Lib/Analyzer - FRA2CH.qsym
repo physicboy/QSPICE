@@ -1,6 +1,6 @@
-ÿØÿÛ«symbol Analyzer - FRA
+ÿØÿÛ«symbol Analyzer - FRA2CH
   «type: X»
-  «library file: |.subckt FRA_V7 in1+ in1- in2+ in2- out+ out- param2 param1 param3 param4\nE2 in1 0 in1+ in1- 1\nE3 in2 0 in2+ in2- 1\nB1 out+ out- V=v(a)*sin(v(th))\nB2 theta 0 V=idt(2*pi*v(f),0)\nØ´X3 «in1´d in2´d th´d param1´d param2´d param3´d param4´d» «a´d f´d» «» FRA_V7 double f_min=F_MIN double f_max=F_MAX double a_lo=A_LO double a_hi=A_HI double f_lo=F_LO double f_hi=F_HI bool lin0_log1=LIN0_LOG1 double tstep_factor=TSTEP_FACTOR double ss_tmax=SS_TMAX double dwell_mintime=DWELL_MINTIME double dwell_period=DWELL_PERIOD double meas_mintime=MEAS_MINTIME double meas_period=MEAS_PERIOD int f_step=F_STEP bool plot=PLOT bool bpf_off0_on1 = BPF_OFF0_ON1 char *fname=fname\nB9 th 0 V=v(theta)-2*pi*floor(v(theta)/(2*pi))\n.ends FRA_V7»
+  «library file: |.subckt FRA_V7_2CH in1+ in1- in2+ in2- out+ out- param2 param1 param3 param4\nE2 in1 0 in1+ in1- 1\nE3 in2 0 in2+ in2- 1\nB1 out+ out- V=v(a)*sin(v(th))\nB2 theta 0 V=idt(2*pi*v(f),0)\nØ´X3 «in1´d in2´d th´d param1´d param2´d param3´d param4´d» «a´d f´d» «» FRA_V7_2CH double f_min=F_MIN double f_max=F_MAX double a_lo=A_LO double a_hi=A_HI double f_lo=F_LO double f_hi=F_HI bool lin0_log1=LIN0_LOG1 double tstep_factor=TSTEP_FACTOR double ss_tmax=SS_TMAX double dwell_mintime=DWELL_MINTIME double dwell_period=DWELL_PERIOD double meas_mintime=MEAS_MINTIME double meas_period=MEAS_PERIOD int f_step=F_STEP bool plot=PLOT bool bpf_off0_on1 = BPF_OFF0_ON1\nB9 th 0 V=v(theta)-2*pi*floor(v(theta)/(2*pi))\n.ends FRA_V7_2CH»
   «shorted pins: false»
   «line (100,-300) (1300,-300) 0 0 0x1000000 -1 -1»
   «line (100,-500) (1300,-500) 0 0 0x1000000 -1 -1»
@@ -35,7 +35,7 @@
   «arc3p (1500,-100) (1450,-150) (1500,-150) 0 0 0x1000000 -1 -1»
   «arc3p (1450,-250) (1500,-300) (1500,-250) 0 0 0x1000000 -1 -1»
   «text (95,103) 1 7 0 0x1000000 -1 -1 "FRA_2CH1"»
-  «text (994,107) 1 7 2 0x1000000 -1 -1 "FRA_V7"»
+  «text (994,107) 1 7 2 0x1000000 -1 -1 "FRA_V7_2CH"»
   «text (150,-150) 0.5 7 0 0x1000000 -1 -1 "F_MIN=<100>"»
   «text (150,-250) 0.5 7 0 0x1000000 -1 -1 "F_MAX=<100K>"»
   «text (750,-150) 0.5 7 0 0x1000000 -1 -1 "F_STEP=<61>"»
