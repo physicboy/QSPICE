@@ -222,5 +222,6 @@
   «text (-3450,1000) 1 7 0 0x1000000 -1 -1 "ï»¿.options method=gear trtol2=0"»
   «text (-3450,800) 1 7 1 0x1000000 -1 -1 "ï»¿.step param ff list 1K 2K 3K 4K 5K"»
   «text (-3500,1500) 1 7 0 0x1000000 -1 -1 "ï»¿.param ff=1K"»
+  «text (-300,-2150) 1 7 0 0x1000000 -1 -1 "ï»¿.opt vntol=1n"»
 »
 
