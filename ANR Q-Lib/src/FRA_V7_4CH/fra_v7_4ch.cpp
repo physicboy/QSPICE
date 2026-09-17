@@ -17,6 +17,7 @@ extern "C" __declspec(dllexport) const int *StepNumber                   = 0; //
 extern "C" __declspec(dllexport) const int *NumberSteps                  = 0; // pointer to estimated number of steps
 extern "C" __declspec(dllexport) const char **InstanceName               = 0; // pointer to address of instance name
 extern "C" __declspec(dllexport) const char *QUX                         = 0; // path to QUX.exe
+extern "C" __declspec(dllexport) const bool *ForKeeps                    = 0; // pointer to whether being evaluated non-hypothetically
 extern "C" __declspec(dllexport) int (*DFFT)(struct sComplex *u, bool inv, unsigned int N, double scale) = 0;
 
 union uData
@@ -130,6 +131,8 @@ char *fname = "fra.csv";
 
 extern "C" __declspec(dllexport) void fra_v7_4ch(struct sFRA_V7_4CH **opaque, double t, union uData *data)
 {
+   if(!*ForKeeps) return; // do nothing if being evaluated hypothetically
+
    double  IN1           = data[ 0].d; // input
    double  IN2           = data[ 1].d; // input
    double  th            = data[ 2].d; // input
